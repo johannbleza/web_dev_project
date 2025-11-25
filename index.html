@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous"
+    />
+    <title>Tara-vel!</title>
+    <link href="./style.css" />
+    <style>
+      .input {
+        all: unset;
+      }
+      .glass {
+        background-color: #ffffff20;
+        backdrop-filter: blur(8px);
+      }
+      input::placeholder {
+        color: #ffffffc1;
+      }
+
+      .hero-title {
+        font-size: 4rem;
+      }
+
+      .search {
+        width: 24rem;
+      }
+
+      /* Media query for medium-sized screens */
+      @media (min-width: 768px) {
+        .hero-title {
+          font-size: 7rem;
+        }
+        .search {
+          width: 36rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md position-absolute z-3 w-100 p-4">
+      <div class="container-fluid">
+        <a class="navbar-brand text-white d-md-none" href="#">Tara-vel PH </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+          aria-controls="navbarNav"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse  d-md-flex justify-content-between" id="navbarNav">
+        <a class="navbar-brand text-white " href="#">Tara-vel PH </a>
+          <ul class="navbar-nav glass rounded-5 px-4 gap-5">
+            <li class="nav-item">
+              <a class="nav-link text-white" aria-current="page" href="#">About</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-white" href="#">Services</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-white" href="#">Tour</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link text-white" href="#">Contact</a>
+            </li>
+          </ul>
+          <button class="btn btn-light rounded-5 px-3">Login</button>
+        </div>
+      </div>
+    </nav>
+
+
+    <!-- Hero section -->
+    <section class="min-vh-100 bg-black">
+      <img
+        class="position-absolute z-0"
+        src="./images/hero.jpg"
+        style="height: 100vh; width: 100vw; object-fit: cover; opacity: 60%"
+      />
+      <div
+        class="position-relative d-flex justify-content-center align-items-center vh-100 text-white flex-column"
+      >
+        <div class="text-center">
+          <h1 class="hero-title">Tara? Set. G!</h1>
+          <p class="opacity-75">
+            Exploring Philippines is an unforgettable adventure.
+          </p>
+        </div>
+        <!-- Search Input -->
+        <div
+          class="glass p-2 px-3 rounded-5 d-flex justify-content-between search gap-2"
+        >
+          <input
+            class="text-white p-2 w-100 input"
+            placeholder="Search destinations..."
+          />
+          </style>
+          <button class="btn btn-light rounded-5 px-3">Search</button>
+        </div>
+      </div>
+    </section>
+    <section class="min-vh-100 position-relative"></section>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
