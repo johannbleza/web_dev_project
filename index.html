@@ -10,42 +10,188 @@
       crossorigin="anonymous"
     />
     <title>Tara-Trip!</title>
-    <link href="./style.css" />
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+        background-color: #f8f9fa;
+        color: #111;
+      }
+
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
       .input {
         all: unset;
       }
+
       .glass {
         background-color: #ffffff20;
         backdrop-filter: blur(8px);
       }
+
       input::placeholder {
         color: #ffffffc1;
       }
+
       .hero-title {
-        font-size: 4rem;
+        font-size: clamp(2.75rem, 12vw, 7rem);
       }
+
       .search {
-        width: 24rem;
+        width: min(90vw, 24rem);
       }
 
-      .favorite-img {
-        width: 680px;
+      .favorites-grid,
+      .tour-grid {
+        display: grid;
+        gap: 1.5rem;
       }
 
-      /* Media query for medium-sized screens */
-      @media (min-width: 1024px) {
-        .hero-title {
-          font-size: 7rem;
+      .favorite-card,
+      .tour-card {
+        width: 100%;
+      }
+
+      .favorite-card img,
+      .tour-card img {
+        border-radius: 2rem;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
+      }
+
+      .favorite-card img {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        min-height: 220px;
+        object-fit: cover;
+      }
+
+      .tour-card img {
+        width: 100%;
+        aspect-ratio: 5 / 4;
+        min-height: 320px;
+        object-fit: cover;
+      }
+
+      .favorite-copy {
+        width: 100%;
+      }
+
+      .rating-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .rating-star {
+        width: 1.15rem;
+        height: 1.15rem;
+        fill: #ffdd57;
+        stroke: #ffdd57;
+        stroke-linejoin: round;
+        stroke-width: 1.2;
+      }
+
+      .tour-card .glass {
+        background-color: rgba(0, 0, 0, 0.35);
+      }
+
+      .how-it-works {
+        display: grid;
+        gap: 2rem;
+      }
+
+      .how-it-works-img {
+        width: 100%;
+        max-height: 820px;
+        object-fit: cover;
+        border-radius: 2rem;
+        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+      }
+
+      @media (min-width: 640px) {
+        .search {
+          width: min(80vw, 28rem);
         }
+      }
+
+      @media (min-width: 768px) {
+        .favorites-grid,
+        .tour-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (min-width: 992px) {
+        .favorite-copy {
+          max-width: 520px;
+        }
+
+        .how-it-works {
+          grid-template-columns: 0.95fr 1.05fr;
+          align-items: center;
+        }
+
+        .tour-card img {
+          min-height: 420px;
+        }
+      }
+
+      @media (min-width: 1024px) {
         .search {
           width: 36rem;
         }
-        .favorite-img {
-          width: 500px;
+      }
+
+      @media (min-width: 1200px) {
+        .favorites-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1.25rem;
         }
-        .tour-img {
-          width: 400px;
+
+        .favorite-card {
+          flex-grow: 0;
+        }
+
+        .favorite-card img {
+          aspect-ratio: auto;
+          height: 300px;
+          width: 100%;
+          object-fit: cover;
+        }
+
+        .favorite-card-wide {
+          flex: 0 0 64%;
+        }
+
+        .favorite-card-medium {
+          flex: 0 0 calc(36% - 1.25rem);
+        }
+
+        .tour-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 1.5rem;
+        }
+
+        .tour-card {
+          flex: 1 1 30%;
+          max-width: 600px;
+        }
+
+        .tour-card img {
+          aspect-ratio: auto;
+          height: 600px;
+          width: 600px;
         }
       }
     </style>
@@ -127,20 +273,18 @@
         <p class="fs-6 text-muted">Favorite Locations</p>
         <div class="d-lg-flex align-items-end justify-content-between gap-1">
           <h1 style="font-size: 4rem">Philippine Tourism</h1>
-          <p class="w-50">
+          <p class="favorite-copy text-muted">
             Extraordinary natural beauty, enjoy the rich culture, and experience
             the friendliness of the local people.
           </p>
         </div>
       </div>
 
-      <div class="d-flex flex-wrap justify-content-start mt-4 gap-4">
-        <div class="position-relative">
+      <div class="favorites-grid mt-4">
+        <div class="position-relative favorite-card favorite-card-wide">
           <img
             src="./images/boracay.jpg"
             class="rounded-5 shadow-lg object-fit-cover"
-            height="300px"
-            width="680px"
           />
           <div
             class="position-absolute text-white"
@@ -150,12 +294,10 @@
             <h1>Boracay</h1>
           </div>
         </div>
-        <div class="position-relative">
+        <div class="position-relative favorite-card favorite-card-medium">
           <img
             src="./images/siargao.jpg"
-            class="rounded-5 shadow-lg object-fit-cover favorite-img"
-            width="500px"
-            height="300px"
+            class="rounded-5 shadow-lg object-fit-cover"
           />
           <div
             class="position-absolute text-white"
@@ -165,12 +307,10 @@
             <h1>Guyam Island</h1>
           </div>
         </div>
-        <div class="position-relative">
+        <div class="position-relative favorite-card favorite-card-medium">
           <img
             src="./images/coron.jpg"
-            class="rounded-5 shadow-lg object-fit-cover favorite-img"
-            width="500px"
-            height="300px"
+            class="rounded-5 shadow-lg object-fit-cover"
           />
           <div
             class="position-absolute text-white"
@@ -180,12 +320,10 @@
             <h1>Coron</h1>
           </div>
         </div>
-        <div class="position-relative">
+        <div class="position-relative favorite-card favorite-card-wide">
           <img
             src="./images/el-nido.avif"
             class="rounded-5 shadow-lg object-fit-cover"
-            height="300px"
-            width="680px"
           />
           <div
             class="position-absolute text-white"
@@ -199,11 +337,10 @@
     </section>
 
     <!-- How it Works -->
-    <section class="min-vh-100 container mt-5 d-flex gap-4">
+    <section class="min-vh-100 container mt-5 how-it-works">
       <img
         src="./images/traveler.jpg"
-        height="800"
-        class="object-fit-cover rounded-5 d-none d-lg-flex shadow-lg m-4"
+        class="object-fit-cover rounded-5 d-none d-lg-flex how-it-works-img"
       />
       <div>
         <div>
@@ -315,16 +452,17 @@
           </p>
         </div>
       </div>
-      <div class="d-flex flex-wrap gap-4 mt-4">
-        <div class="position-relative d-flex justify-content-center">
+      <div class="tour-grid mt-4">
+        <div class="position-relative d-flex justify-content-center tour-card">
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
             style="right: 16px; top: 16px"
           >
-            <img
-              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmViNjYiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1zdGFyLWljb24gbHVjaWRlLXN0YXIiPjxwYXRoIGQ9Ik0xMS41MjUgMi4yOTVhLjUzLjUzIDAgMCAxIC45NSAwbDIuMzEgNC42NzlhMi4xMjMgMi4xMjMgMCAwIDAgMS41OTUgMS4xNmw1LjE2Ni43NTZhLjUzLjUzIDAgMCAxIC4yOTQuOTA0bC0zLjczNiAzLjYzOGEyLjEyMyAyLjEyMyAwIDAgMC0uNjExIDEuODc4bC44ODIgNS4xNGEuNTMuNTMgMCAwIDEtLjc3MS41NmwtNC42MTgtMi40MjhhMi4xMjIgMi4xMjIgMCAwIDAtMS45NzMgMEw2LjM5NiAyMS4wMWEuNTMuNTMgMCAwIDEtLjc3LS41NmwuODgxLTUuMTM5YTIuMTIyIDIuMTIyIDAgMCAwLS42MTEtMS44NzlMMi4xNiA5Ljc5NWEuNTMuNTMgMCAwIDEgLjI5NC0uOTA2bDUuMTY1LS43NTVhMi4xMjIgMi4xMjIgMCAwIDAgMS41OTctMS4xNnoiLz48L3N2Zz4="
-              alt=""
-            />
+            <svg class="rating-star" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3.5 14.25 8l5.04.73-3.64 3.54.86 5.01L12 14.9 7.49 17.28l.86-5.01-3.64-3.54 5.04-.73Z"
+              ></path>
+            </svg>
             4.5
           </div>
           <div
@@ -345,21 +483,20 @@
           </div>
           <img
             src="./images/tour1.jpg"
-            height="600"
-            width="600"
             alt=""
             class="object-fit-cover rounded-5 z-0 shadow-lg tour-img"
           />
         </div>
-        <div class="position-relative d-flex justify-content-center">
+        <div class="position-relative d-flex justify-content-center tour-card">
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
             style="right: 16px; top: 16px"
           >
-            <img
-              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmViNjYiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1zdGFyLWljb24gbHVjaWRlLXN0YXIiPjxwYXRoIGQ9Ik0xMS41MjUgMi4yOTVhLjUzLjUzIDAgMCAxIC45NSAwbDIuMzEgNC42NzlhMi4xMjMgMi4xMjMgMCAwIDAgMS41OTUgMS4xNmw1LjE2Ni43NTZhLjUzLjUzIDAgMCAxIC4yOTQuOTA0bC0zLjczNiAzLjYzOGEyLjEyMyAyLjEyMyAwIDAgMC0uNjExIDEuODc4bC44ODIgNS4xNGEuNTMuNTMgMCAwIDEtLjc3MS41NmwtNC42MTgtMi40MjhhMi4xMjIgMi4xMjIgMCAwIDAtMS45NzMgMEw2LjM5NiAyMS4wMWEuNTMuNTMgMCAwIDEtLjc3LS41NmwuODgxLTUuMTM5YTIuMTIyIDIuMTIyIDAgMCAwLS42MTEtMS44NzlMMi4xNiA5Ljc5NWEuNTMuNTMgMCAwIDEgLjI5NC0uOTA2bDUuMTY1LS43NTVhMi4xMjIgMi4xMjIgMCAwIDAgMS41OTctMS4xNnoiLz48L3N2Zz4="
-              alt=""
-            />
+            <svg class="rating-star" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3.5 14.25 8l5.04.73-3.64 3.54.86 5.01L12 14.9 7.49 17.28l.86-5.01-3.64-3.54 5.04-.73Z"
+              ></path>
+            </svg>
             4.8
           </div>
           <div
@@ -380,21 +517,20 @@
           </div>
           <img
             src="./images/tour2.jpg"
-            width="600"
-            height="600"
             alt=""
             class="object-fit-cover rounded-5 z-0 shadow-lg tour-img"
           />
         </div>
-        <div class="position-relative d-flex justify-content-center">
+        <div class="position-relative d-flex justify-content-center tour-card">
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
             style="right: 16px; top: 16px"
           >
-            <img
-              src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmViNjYiIHN0cm9rZS13aWR0aD0iMyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0ibHVjaWRlIGx1Y2lkZS1zdGFyLWljb24gbHVjaWRlLXN0YXIiPjxwYXRoIGQ9Ik0xMS41MjUgMi4yOTVhLjUzLjUzIDAgMCAxIC45NSAwbDIuMzEgNC42NzlhMi4xMjMgMi4xMjMgMCAwIDAgMS41OTUgMS4xNmw1LjE2Ni43NTZhLjUzLjUzIDAgMCAxIC4yOTQuOTA0bC0zLjczNiAzLjYzOGEyLjEyMyAyLjEyMyAwIDAgMC0uNjExIDEuODc4bC44ODIgNS4xNGEuNTMuNTMgMCAwIDEtLjc3MS41NmwtNC42MTgtMi40MjhhMi4xMjIgMi4xMjIgMCAwIDAtMS45NzMgMEw2LjM5NiAyMS4wMWEuNTMuNTMgMCAwIDEtLjc3LS41NmwuODgxLTUuMTM5YTIuMTIyIDIuMTIyIDAgMCAwLS42MTEtMS44NzlMMi4xNiA5Ljc5NWEuNTMuNTMgMCAwIDEgLjI5NC0uOTA2bDUuMTY1LS43NTVhMi4xMjIgMi4xMjIgMCAwIDAgMS41OTctMS4xNnoiLz48L3N2Zz4="
-              alt=""
-            />
+            <svg class="rating-star" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M12 3.5 14.25 8l5.04.73-3.64 3.54.86 5.01L12 14.9 7.49 17.28l.86-5.01-3.64-3.54 5.04-.73Z"
+              ></path>
+            </svg>
             5
           </div>
           <div
@@ -415,14 +551,14 @@
           </div>
           <img
             src="./images/tour3.jpg"
-            width="600"
-            height="600"
             alt=""
             class="object-fit-cover rounded-5 z-0 shadow-lg tour-img"
           />
         </div>
       </div>
     </section>
+
+    <!-- Testimonials section -->
 
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
