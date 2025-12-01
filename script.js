@@ -12,6 +12,7 @@ const LOCATION_ALIAS_MAP = {
 };
 
 const EXCHANGE_RATE_USD_TO_PHP = 56;
+const DEFAULT_LOCATION = LOCATION_ALIAS_MAP.boracay;
 
 document.addEventListener("DOMContentLoaded", () => {
   const searchForm = document.getElementById("hotelSearchForm");
@@ -25,7 +26,8 @@ document.addEventListener("DOMContentLoaded", () => {
     loadHotels(location, resultsGrid, statusEl);
   });
 
-  loadHotels(LOCATION_ALIAS_MAP["boracay"], resultsGrid, statusEl);
+  loadHotels(DEFAULT_LOCATION, resultsGrid, statusEl);
+  initializeClerkAuth();
 });
 
 async function loadHotels(location, resultsGrid, statusEl) {
@@ -140,4 +142,81 @@ function formatPriceRange(range) {
 function resolveLocationKey(query) {
   const normalizedQuery = query.trim().toLowerCase();
   return LOCATION_ALIAS_MAP[normalizedQuery] || DEFAULT_LOCATION;
+}
+
+async function initializeClerkAuth() {
+  const loginButton = document.getElementById("loginButton");
+  const logoutButton = document.getElementById("logoutButton");
+  const userButton = document.getElementById("userButton");
+  const userAvatar = document.getElementById("userAvatar");
+
+  try {
+    const clerk = await waitForClerk();
+    await clerk.load();
+
+    loginButton.addEventListener("click", () => {
+      clerk.openSignIn({
+        afterSignInUrl: window.location.href,
+        afterSignUpUrl: window.location.href,
+      });
+    });
+
+    logoutButton.addEventListener("click", () => clerk.signOut());
+    userButton.addEventListener("click", () => clerk.openUserProfile());
+
+    const renderAuthState = () => {
+      const isSignedIn = Boolean(clerk.user);
+
+      loginButton.classList.toggle("d-none", isSignedIn);
+      logoutButton.classList.toggle("d-none", !isSignedIn);
+      userButton.classList.toggle("d-none", !isSignedIn);
+
+      if (isSignedIn) {
+        const avatarUrl =
+          clerk.user.imageUrl || clerk.user.profileImageUrl || userAvatar.src;
+        userAvatar.src = avatarUrl;
+        userAvatar.alt = `${
+          clerk.user.fullName || clerk.user.firstName || "Signed-in user"
+        } profile photo`;
+      }
+    };
+
+    renderAuthState();
+
+    if (typeof clerk.addListener === "function") {
+      clerk.addListener(renderAuthState);
+    } else {
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          renderAuthState();
+        }
+      });
+    }
+  } catch (error) {
+    console.error("Failed to initialize Clerk:", error);
+  }
+}
+
+function waitForClerk() {
+  return new Promise((resolve, reject) => {
+    const MAX_WAIT_TIME = 10000;
+    const intervalMs = 50;
+    let elapsed = 0;
+
+    if (window.Clerk) {
+      resolve(window.Clerk);
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      elapsed += intervalMs;
+      if (window.Clerk) {
+        clearInterval(intervalId);
+        resolve(window.Clerk);
+      } else if (elapsed >= MAX_WAIT_TIME) {
+        clearInterval(intervalId);
+        reject(new Error("Clerk failed to load"));
+      }
+    }, intervalMs);
+  });
 }
