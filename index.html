@@ -195,6 +195,53 @@
         text-decoration: none;
       }
 
+      .hotel-results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .hotel-card {
+        border-radius: 1.75rem;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 25px 55px rgba(15, 23, 42, 0.15);
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+      }
+
+      .hotel-card img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+      }
+
+      .hotel-card-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        flex: 1;
+      }
+
+      .hotel-card-body a {
+        align-self: flex-start;
+      }
+
+      .hotel-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+        color: #6c757d;
+      }
+
+      .hotel-price {
+        font-weight: 600;
+        color: #0d6efd;
+      }
+
       @media (min-width: 768px) {
         .search {
           width: min(80vw, 28rem);
@@ -339,16 +386,46 @@
           </p>
         </div>
         <!-- Search Input -->
-        <div
+        <form
+          id="hotelSearchForm"
           class="glass p-2 px-3 rounded-5 d-flex justify-content-between search gap-2"
         >
           <input
+            id="hotelSearchInput"
             class="text-white p-2 w-100 input"
-            placeholder="Search destinations..."
+            placeholder='Try "Boracay", "Cebu", or a TripAdvisor key'
+            autocomplete="off"
+            aria-label="Search hotels by location"
           />
-          <button class="btn btn-light rounded-5 px-3">Search</button>
-        </div>
+          <button class="btn btn-light rounded-5 px-3" type="submit">
+            Search
+          </button>
+        </form>
+        <small class="text-white-50 mt-3 text-center">
+          Defaults to Boracay (key g294260). Paste any TripAdvisor Hotels URL to
+          target another area.
+        </small>
       </div>
+    </section>
+
+    <section class="container py-5" id="live-hotels">
+      <div class="text-center text-md-start">
+        <p class="text-muted text-uppercase mb-1" style="letter-spacing: 0.2em">
+          Live hotel picks
+        </p>
+        <h2 class="fw-bold" style="font-size: clamp(2rem, 4vw, 3.5rem)">
+          Real-time stays powered by Xotelo
+        </h2>
+        <p class="text-muted mb-0">
+          Enter a TripAdvisor location key (e.g., g294260) or one of these
+          destinations: Boracay, Palawan, Manila, Cebu, Bohol, Davao. We return
+          a curated set of 5 hotels to keep things fast.
+        </p>
+      </div>
+      <div id="hotelResultsStatus" class="mt-4 text-muted">
+        Loading Boracay highlights...
+      </div>
+      <div id="hotelResultsGrid" class="hotel-results-grid mt-4"></div>
     </section>
 
     <!-- About Section -->
@@ -732,5 +809,6 @@
       integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
       crossorigin="anonymous"
     ></script>
+    <script src="./script.js" defer></script>
   </body>
 </html>
