@@ -195,6 +195,7 @@ async function handleBooking(e) {
     pricePerNight: booking.price,
     nights,
     image: booking.image,
+    userId: clerk?.user?.id || "",
   };
 
   await checkout(bookingData);

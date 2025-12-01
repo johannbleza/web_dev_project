@@ -101,8 +101,16 @@ app.get("/api/hotels", async (req, res) => {
 
 app.post("/api/checkout", async (req, res) => {
   try {
-    const { hotel, pricePerNight, nights, guests, startDate, endDate, image } =
-      req.body;
+    const {
+      hotel,
+      pricePerNight,
+      nights,
+      guests,
+      startDate,
+      endDate,
+      image,
+      userId,
+    } = req.body;
 
     if (!hotel || !pricePerNight || !nights) {
       return res
@@ -111,6 +119,18 @@ app.post("/api/checkout", async (req, res) => {
     }
 
     const totalAmount = pricePerNight * nights * 100;
+    const totalInPHP = pricePerNight * nights;
+
+    // Build success URL with booking details for the thank you page
+    const successParams = new URLSearchParams({
+      user_id: userId || "",
+      hotel: hotel,
+      start_date: startDate,
+      end_date: endDate,
+      guests: guests,
+      nights: nights,
+      total: totalInPHP,
+    });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -129,8 +149,9 @@ app.post("/api/checkout", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: "http://localhost:5500/index.html?payment=success",
-      cancel_url: "http://localhost:5500/index.html?payment=cancelled",
+      success_url: `http://localhost/web_dev_project/thankyou.php?${successParams.toString()}`,
+      cancel_url:
+        "http://localhost/web_dev_project/index.html?payment=cancelled",
     });
 
     res.json({ url: session.url });
