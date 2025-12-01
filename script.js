@@ -1,5 +1,6 @@
 const API_BASE_URL = "https://data.xotelo.com/api";
 const RESULT_LIMIT = 6;
+const STRIPE_SERVER_URL = "http://localhost:3000";
 
 const LOCATION_ALIAS_MAP = {
   boracay: { key: "g294260", label: "Boracay, Philippines" },
@@ -332,7 +333,7 @@ function handleHotelCardClick(card) {
   bookingModalInstance.show();
 }
 
-function handleBookingSubmit(event) {
+async function handleBookingSubmit(event) {
   event.preventDefault();
 
   if (!isUserAuthenticated()) {
@@ -341,13 +342,22 @@ function handleBookingSubmit(event) {
   }
 
   const userInfo = getAuthenticatedUserInfo();
+  const startDate = bookingFormState.startDateInput.value;
+  const endDate = bookingFormState.endDateInput?.value;
+  const nights = calculateNights(startDate, endDate);
+
+  if (nights < 1) {
+    alert("Please select valid dates (end date must be after start date)");
+    return;
+  }
 
   const bookingDetails = {
     hotel: bookingFormState.hotelInput.value,
-    startDate: bookingFormState.startDateInput.value,
-    endDate: bookingFormState.endDateInput?.value,
+    startDate: startDate,
+    endDate: endDate,
     guests: Number(bookingFormState.guestsInput.value),
     pricePerNight: bookingFormState.priceAmount,
+    nights: nights,
     info: bookingFormState.metaDisplay?.textContent,
     image: bookingFormState.imageSrc,
     user: userInfo,
@@ -355,8 +365,59 @@ function handleBookingSubmit(event) {
 
   console.log(bookingDetails);
 
-  event.target.reset();
-  bookingModalInstance?.hide();
+  // Redirect to Stripe Checkout
+  await redirectToStripeCheckout(bookingDetails);
+}
+
+function calculateNights(startDate, endDate) {
+  if (!startDate || !endDate) return 0;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = end - start;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
+}
+
+async function redirectToStripeCheckout(bookingDetails) {
+  try {
+    const submitButton = document.querySelector(
+      '#bookingForm button[type="submit"]'
+    );
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Redirecting...";
+    }
+
+    const response = await fetch(
+      `${STRIPE_SERVER_URL}/create-checkout-session`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingDetails),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || "Failed to create checkout session");
+    }
+  } catch (error) {
+    console.error("Checkout error:", error);
+    alert("Failed to redirect to checkout. Please try again.");
+
+    const submitButton = document.querySelector(
+      '#bookingForm button[type="submit"]'
+    );
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit";
+    }
+  }
 }
 
 // Clerk Authentication
