@@ -14,67 +14,55 @@ const booking = {
 };
 
 // DOM Elements
-const elements = {
-  // Search
-  searchForm: () => document.getElementById("hotelSearchForm"),
-  searchInput: () => document.getElementById("hotelSearchInput"),
-  resultsGrid: () => document.getElementById("hotelResultsGrid"),
-  statusText: () => document.getElementById("hotelResultsStatus"),
+// Search
+const searchForm = document.getElementById("hotelSearchForm");
+const searchInput = document.getElementById("hotelSearchInput");
+const resultsGrid = document.getElementById("hotelResultsGrid");
+const statusText = document.getElementById("hotelResultsStatus");
 
-  // Booking Form
-  bookingForm: () => document.getElementById("bookingForm"),
-  hotelInput: () => document.getElementById("bookingHotel"),
-  startDate: () => document.getElementById("bookingStartDate"),
-  endDate: () => document.getElementById("bookingEndDate"),
-  guests: () => document.getElementById("bookingGuests"),
-  priceDisplay: () => document.getElementById("bookingPriceValue"),
-  metaDisplay: () => document.getElementById("bookingMeta"),
-  hotelImage: () => document.getElementById("bookingHotelImage"),
-  submitBtn: () => document.querySelector('#bookingForm button[type="submit"]'),
+// Booking Form
+const bookingForm = document.getElementById("bookingForm");
+const hotelInput = document.getElementById("bookingHotel");
+const startDateInput = document.getElementById("bookingStartDate");
+const endDateInput = document.getElementById("bookingEndDate");
+const guestsInput = document.getElementById("bookingGuests");
+const priceDisplay = document.getElementById("bookingPriceValue");
+const metaDisplay = document.getElementById("bookingMeta");
+const hotelImage = document.getElementById("bookingHotelImage");
+const submitBtn = document.querySelector('#bookingForm button[type="submit"]');
 
-  // Auth
-  loginBtn: () => document.getElementById("loginButton"),
-  logoutBtn: () => document.getElementById("logoutButton"),
-  userBtn: () => document.getElementById("userButton"),
-  userAvatar: () => document.getElementById("userAvatar"),
-  modalLoginBtn: () => document.getElementById("modalLoginButton"),
-};
+// Auth
+const loginBtn = document.getElementById("loginButton");
+const logoutBtn = document.getElementById("logoutButton");
+const userBtn = document.getElementById("userButton");
+const userAvatar = document.getElementById("userAvatar");
+const modalLoginBtn = document.getElementById("modalLoginButton");
 
-// Initialize App
-document.addEventListener("DOMContentLoaded", () => {
-  initModals();
-  initSearch();
-  initBookingForm();
-  initAuth();
-  loadHotels("boracay");
+// Modals
+const bookingEl = document.getElementById("bookingModal");
+const authEl = document.getElementById("authRequiredModal");
+if (bookingEl) bookingModal = new bootstrap.Modal(bookingEl);
+if (authEl) authModal = new bootstrap.Modal(authEl);
+
+// Search
+searchForm?.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const query = searchInput?.value || "boracay";
+  loadHotels(query);
 });
 
-function initModals() {
-  const bookingEl = document.getElementById("bookingModal");
-  const authEl = document.getElementById("authRequiredModal");
+// Booking Form
+bookingForm?.addEventListener("submit", handleBooking);
 
-  if (bookingEl) bookingModal = new bootstrap.Modal(bookingEl);
-  if (authEl) authModal = new bootstrap.Modal(authEl);
-}
+// Auth
+initAuth();
 
-function initSearch() {
-  elements.searchForm()?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const query = elements.searchInput()?.value || "boracay";
-    loadHotels(query);
-  });
-}
-
-function initBookingForm() {
-  elements.bookingForm()?.addEventListener("submit", handleBooking);
-}
+// Load initial hotels
+loadHotels("boracay");
 
 async function loadHotels(location) {
-  const grid = elements.resultsGrid();
-  const status = elements.statusText();
-
-  status.textContent = "Searching for hotels...";
-  grid.innerHTML = "";
+  statusText.textContent = "Searching for hotels...";
+  resultsGrid.innerHTML = "";
 
   try {
     const res = await fetch(
@@ -83,16 +71,16 @@ async function loadHotels(location) {
     const data = await res.json();
 
     if (!data.hotels?.length) {
-      status.textContent = `No hotels found for ${data.location}.`;
+      statusText.textContent = `No hotels found for ${data.location}.`;
       return;
     }
 
-    grid.innerHTML = data.hotels.map(createHotelCard).join("");
-    attachCardListeners(grid);
-    status.textContent = `Showing ${data.count} stays for ${data.location}.`;
+    resultsGrid.innerHTML = data.hotels.map(createHotelCard).join("");
+    attachCardListeners(resultsGrid);
+    statusText.textContent = `Showing ${data.count} stays for ${data.location}.`;
   } catch (error) {
     console.error(error);
-    status.textContent = "Error fetching hotels.";
+    statusText.textContent = "Error fetching hotels.";
   }
 }
 
@@ -173,11 +161,11 @@ function openBookingModal(card) {
   booking.meta = `${accommodation} • Rating ${rating} • ${reviews}`;
 
   // Update form
-  elements.hotelInput().value = name;
-  elements.priceDisplay().textContent = price || "N/A";
-  elements.metaDisplay().textContent = booking.meta;
-  elements.hotelImage().src = image;
-  elements.hotelImage().alt = `${name} preview`;
+  hotelInput.value = name;
+  priceDisplay.textContent = price || "N/A";
+  metaDisplay.textContent = booking.meta;
+  hotelImage.src = image;
+  hotelImage.alt = `${name} preview`;
 
   bookingModal?.show();
 }
@@ -190,9 +178,9 @@ async function handleBooking(e) {
     return;
   }
 
-  const startDate = elements.startDate().value;
-  const endDate = elements.endDate().value;
-  const nights = calculateNights(startDate, endDate);
+  const start = startDateInput.value;
+  const end = endDateInput.value;
+  const nights = calculateNights(start, end);
 
   if (nights < 1) {
     alert("Please select valid dates (end date must be after start date)");
@@ -201,9 +189,9 @@ async function handleBooking(e) {
 
   const bookingData = {
     hotel: booking.hotel,
-    startDate,
-    endDate,
-    guests: Number(elements.guests().value),
+    startDate: start,
+    endDate: end,
+    guests: Number(guestsInput.value),
     pricePerNight: booking.price,
     nights,
     image: booking.image,
@@ -220,12 +208,10 @@ function calculateNights(start, end) {
 }
 
 async function checkout(data) {
-  const btn = elements.submitBtn();
-
   try {
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Redirecting...";
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Redirecting...";
     }
 
     const res = await fetch(`${API_URL}/checkout`, {
@@ -245,25 +231,22 @@ async function checkout(data) {
     console.error("Checkout error:", error);
     alert("Failed to redirect to checkout. Please try again.");
 
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "Submit";
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit";
     }
   }
 }
 
-// Authentication (Clerk)
 async function initAuth() {
   try {
     clerk = await waitForClerk();
     await clerk.load();
 
-    elements.loginBtn()?.addEventListener("click", login);
-    elements.logoutBtn()?.addEventListener("click", () => clerk.signOut());
-    elements
-      .userBtn()
-      ?.addEventListener("click", () => clerk.openUserProfile());
-    elements.modalLoginBtn()?.addEventListener("click", () => {
+    loginBtn?.addEventListener("click", login);
+    logoutBtn?.addEventListener("click", () => clerk.signOut());
+    userBtn?.addEventListener("click", () => clerk.openUserProfile());
+    modalLoginBtn?.addEventListener("click", () => {
       login();
       authModal?.hide();
     });
@@ -296,16 +279,15 @@ function waitForClerk() {
 function updateAuthUI() {
   const loggedIn = isLoggedIn();
 
-  elements.loginBtn()?.classList.toggle("d-none", loggedIn);
-  elements.logoutBtn()?.classList.toggle("d-none", !loggedIn);
-  elements.userBtn()?.classList.toggle("d-none", !loggedIn);
+  loginBtn?.classList.toggle("d-none", loggedIn);
+  logoutBtn?.classList.toggle("d-none", !loggedIn);
+  userBtn?.classList.toggle("d-none", !loggedIn);
 
   if (loggedIn && clerk.user) {
-    const avatar = elements.userAvatar();
-    if (avatar) {
-      avatar.src =
-        clerk.user.imageUrl || clerk.user.profileImageUrl || avatar.src;
-      avatar.alt = `${clerk.user.fullName || "User"} profile`;
+    if (userAvatar) {
+      userAvatar.src =
+        clerk.user.imageUrl || clerk.user.profileImageUrl || userAvatar.src;
+      userAvatar.alt = `${clerk.user.fullName || "User"} profile`;
     }
   }
 }

@@ -104,6 +104,57 @@
         background-color: rgba(0, 0, 0, 0.35);
       }
 
+      /* Card overlay positioning */
+      .card-overlay {
+        bottom: 24px;
+        left: 24px;
+      }
+
+      .badge-top-right {
+        right: 16px;
+        top: 16px;
+      }
+
+      .badge-top-left {
+        left: 16px;
+        top: 16px;
+      }
+
+      .tour-info-overlay {
+        bottom: 24px;
+      }
+
+      /* How it works icons */
+      .step-icon-wrapper {
+        background-color: rgb(240, 240, 240);
+        margin-right: 1.5rem;
+      }
+
+      .step-icon {
+        opacity: 0.3;
+      }
+
+      /* Hero image */
+      .hero-bg {
+        height: 100vh;
+        width: 100vw;
+        object-fit: cover;
+        opacity: 0.6;
+      }
+
+      /* Section titles */
+      .section-title {
+        font-size: 4rem;
+      }
+
+      .section-title-md {
+        font-size: 3rem;
+      }
+
+      .section-label {
+        letter-spacing: 0.2em;
+      }
+
       .how-it-works {
         display: grid;
         gap: 2rem;
@@ -307,57 +358,60 @@
         >
           <span class="navbar-toggler-icon"></span>
         </button>
-        <div
-          class="collapse navbar-collapse d-md-flex justify-content-between"
-          id="navbarNav"
-        >
-          <a class="navbar-brand text-white" href="#">Tara-Trip!</a>
-          <ul class="navbar-nav glass rounded-5 px-4 gap-5">
-            <li class="nav-item">
-              <a class="nav-link text-white" aria-current="page" href="#"
-                >About</a
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <div
+            class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center w-100 gap-3"
+          >
+            <a class="navbar-brand text-white d-none d-md-block" href="#"
+              >Tara-Trip!</a
+            >
+            <ul class="navbar-nav glass rounded-5 px-4 gap-3 gap-md-5">
+              <li class="nav-item">
+                <a class="nav-link text-white" aria-current="page" href="#"
+                  >About</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-white" href="#">Services</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-white" href="#">Tour</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link text-white" href="#">Contact</a>
+              </li>
+            </ul>
+            <div class="d-flex align-items-center gap-3" id="authControls">
+              <button
+                class="btn btn-light rounded-5 px-3"
+                id="loginButton"
+                type="button"
               >
-            </li>
-            <li class="nav-item">
-              <a class="nav-link text-white" href="#">Services</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link text-white" href="#">Tour</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link text-white" href="#">Contact</a>
-            </li>
-          </ul>
-          <div class="d-flex align-items-center gap-3" id="authControls">
-            <button
-              class="btn btn-light rounded-5 px-3"
-              id="loginButton"
-              type="button"
-            >
-              Login
-            </button>
-            <button
-              class="btn btn-outline-light rounded-5 px-3 d-none"
-              id="logoutButton"
-              type="button"
-            >
-              Logout
-            </button>
-            <button
-              class="btn p-0 border-0 bg-transparent d-none"
-              id="userButton"
-              type="button"
-              aria-label="Open account settings"
-            >
-              <img
-                id="userAvatar"
-                src="./images/profile.png"
-                alt="User profile"
-                width="48"
-                height="48"
-                class="rounded-5"
-              />
-            </button>
+                Login
+              </button>
+              <button
+                class="btn btn-outline-light rounded-5 px-3 d-none"
+                id="logoutButton"
+                type="button"
+              >
+                Logout
+              </button>
+              <button
+                class="btn p-0 border-0 bg-transparent d-none"
+                id="userButton"
+                type="button"
+                aria-label="Open account settings"
+              >
+                <img
+                  id="userAvatar"
+                  src="./images/profile.png"
+                  alt="User profile"
+                  width="48"
+                  height="48"
+                  class="rounded-5"
+                />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -366,9 +420,9 @@
     <!-- Hero Section -->
     <section class="min-vh-100 bg-black">
       <img
-        class="position-absolute z-0"
+        class="position-absolute z-0 hero-bg"
         src="./images/hero.jpg"
-        style="height: 100vh; width: 100vw; object-fit: cover; opacity: 60%"
+        alt="Scenic Philippine landscape"
       />
       <div
         class="position-relative d-flex justify-content-center align-items-center vh-100 text-white flex-column"
@@ -400,7 +454,7 @@
 
     <section class="container py-5" id="live-hotels">
       <div class="text-center text-md-start">
-        <p class="text-muted text-uppercase mb-1" style="letter-spacing: 0.2em">
+        <p class="text-muted text-uppercase mb-1 section-label">
           Live hotel picks
         </p>
       </div>
@@ -418,7 +472,7 @@
       <div>
         <p class="fs-6 text-muted">Favorite Locations</p>
         <div class="d-lg-flex align-items-end justify-content-between gap-1">
-          <h1 style="font-size: 4rem">Philippine Tourism</h1>
+          <h1 class="section-title">Philippine Tourism</h1>
           <p class="favorite-copy text-muted">
             Extraordinary natural beauty, enjoy the rich culture, and experience
             the friendliness of the local people.
@@ -430,12 +484,10 @@
         <div class="position-relative favorite-card favorite-card-wide">
           <img
             src="./images/boracay.jpg"
-            class="rounded-5 shadow-lg object-fit-cover"
+            alt="White beach in Boracay"
+            class="rounded-5 shadow-lg"
           />
-          <div
-            class="position-absolute text-white"
-            style="bottom: 24px; left: 24px"
-          >
+          <div class="position-absolute text-white card-overlay">
             <p class="fs-5 fw-lighter">Aklan, Philippines</p>
             <h1>Boracay</h1>
           </div>
@@ -443,12 +495,10 @@
         <div class="position-relative favorite-card favorite-card-medium">
           <img
             src="./images/siargao.jpg"
-            class="rounded-5 shadow-lg object-fit-cover"
+            alt="Guyam Island in Siargao"
+            class="rounded-5 shadow-lg"
           />
-          <div
-            class="position-absolute text-white"
-            style="bottom: 24px; left: 24px"
-          >
+          <div class="position-absolute text-white card-overlay">
             <p class="fs-5 fw-lighter">Siargao, Philippines</p>
             <h1>Guyam Island</h1>
           </div>
@@ -456,26 +506,22 @@
         <div class="position-relative favorite-card favorite-card-medium">
           <img
             src="./images/coron.jpg"
-            class="rounded-5 shadow-lg object-fit-cover"
+            alt="Crystal clear waters of Coron"
+            class="rounded-5 shadow-lg"
           />
-          <div
-            class="position-absolute text-white"
-            style="bottom: 24px; left: 24px"
-          >
-            <p class="fs-5 fw-lighter">Palawan, Philippines,</p>
+          <div class="position-absolute text-white card-overlay">
+            <p class="fs-5 fw-lighter">Palawan, Philippines</p>
             <h1>Coron</h1>
           </div>
         </div>
         <div class="position-relative favorite-card favorite-card-wide">
           <img
             src="./images/el-nido.avif"
-            class="rounded-5 shadow-lg object-fit-cover"
+            alt="Beautiful lagoon in El Nido"
+            class="rounded-5 shadow-lg"
           />
-          <div
-            class="position-absolute text-white"
-            style="bottom: 24px; left: 24px"
-          >
-            <p class="fs-5 fw-lighter">Palawan, Philippines,</p>
+          <div class="position-absolute text-white card-overlay">
+            <p class="fs-5 fw-lighter">Palawan, Philippines</p>
             <h1>El Nido</h1>
           </div>
         </div>
@@ -491,21 +537,19 @@
       <div>
         <div>
           <p class="text-muted">How it Works</p>
-          <h1 style="font-size: 3rem">One click for you</h1>
+          <h1 class="section-title-md">One click for you</h1>
         </div>
         <div class="d-flex flex-column gap-4 mt-4">
           <div
             class="card p-4 border-0 shadow-lg rounded-5 d-flex flex-row justify-content-center align-items-start"
           >
-            <div
-              class="text-muted p-2 rounded-2"
-              style="background-color: rgb(240, 240, 240); margin-right: 1.5rem"
-            >
+            <div class="text-muted p-2 rounded-2 step-icon-wrapper">
               <img
                 src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXNlYXJjaC1jaGVjay1pY29uIGx1Y2lkZS1zZWFyY2gtY2hlY2siPjxwYXRoIGQ9Im04IDExIDIgMiA0LTQiLz48Y2lyY2xlIGN4PSIxMSIgY3k9IjExIiByPSI4Ii8+PHBhdGggZD0ibTIxIDIxLTQuMy00LjMiLz48L3N2Zz4="
                 height="40"
                 width="40"
-                style="opacity: 30%"
+                alt=""
+                class="step-icon"
               />
             </div>
             <div>
@@ -519,15 +563,13 @@
           <div
             class="p-4 border-0 rounded-5 d-flex flex-row justify-content-center align-items-start"
           >
-            <div
-              class="text-muted p-2 rounded-2"
-              style="background-color: rgb(240, 240, 240); margin-right: 1.5rem"
-            >
+            <div class="text-muted p-2 rounded-2 step-icon-wrapper">
               <img
                 src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWFsYnVtLWljb24gbHVjaWRlLWFsYnVtIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHg9IjMiIHk9IjMiIHJ4PSIyIiByeT0iMiIvPjxwb2x5bGluZSBwb2ludHM9IjExIDMgMTEgMTEgMTQgOCAxNyAxMSAxNyAzIi8+PC9zdmc+"
                 height="40"
                 width="40"
-                style="opacity: 30%"
+                alt=""
+                class="step-icon"
               />
             </div>
             <div>
@@ -541,15 +583,13 @@
           <div
             class="p-4 border-0 rounded-5 d-flex flex-row justify-content-center align-items-start"
           >
-            <div
-              class="text-muted p-2 rounded-2"
-              style="background-color: rgb(240, 240, 240); margin-right: 1.5rem"
-            >
+            <div class="text-muted p-2 rounded-2 step-icon-wrapper">
               <img
                 src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWNyZWRpdC1jYXJkLWljb24gbHVjaWRlLWNyZWRpdC1jYXJkIj48cmVjdCB3aWR0aD0iMjAiIGhlaWdodD0iMTQiIHg9IjIiIHk9IjUiIHJ4PSIyIi8+PGxpbmUgeDE9IjIiIHgyPSIyMiIgeTE9IjEwIiB5Mj0iMTAiLz48L3N2Zz4="
                 height="40"
                 width="40"
-                style="opacity: 30%"
+                alt=""
+                class="step-icon"
               />
             </div>
             <div>
@@ -563,15 +603,13 @@
           <div
             class="p-4 border-0 rounded-5 d-flex flex-row justify-content-center align-items-start"
           >
-            <div
-              class="text-muted p-2 rounded-2"
-              style="background-color: rgb(240, 240, 240); margin-right: 1.5rem"
-            >
+            <div class="text-muted p-2 rounded-2 step-icon-wrapper">
               <img
                 src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXRlbGVzY29wZS1pY29uIGx1Y2lkZS10ZWxlc2NvcGUiPjxwYXRoIGQ9Im0xMC4wNjUgMTIuNDkzLTYuMTggMS4zMThhLjkzNC45MzQgMCAwIDEtMS4xMDgtLjcwMmwtLjUzNy0yLjE1YTEuMDcgMS4wNyAwIDAgMSAuNjkxLTEuMjY1bDEzLjUwNC00LjQ0Ii8+PHBhdGggZD0ibTEzLjU2IDExLjc0NyA0LjMzMi0uOTI0Ii8+PHBhdGggZD0ibTE2IDIxLTMuMTA1LTYuMjEiLz48cGF0aCBkPSJNMTYuNDg1IDUuOTRhMiAyIDAgMCAxIDEuNDU1LTIuNDI1bDEuMDktLjI3MmExIDEgMCAwIDEgMS4yMTIuNzI3bDEuNTE1IDYuMDZhMSAxIDAgMCAxLS43MjcgMS4yMTNsLTEuMDkuMjcyYTIgMiAwIDAgMS0yLjQyNS0xLjQ1NXoiLz48cGF0aCBkPSJtNi4xNTggOC42MzMgMS4xMTQgNC40NTYiLz48cGF0aCBkPSJtOCAyMSAzLjEwNS02LjIxIi8+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMyIgcj0iMiIvPjwvc3ZnPg=="
                 height="40"
                 width="40"
-                style="opacity: 30%"
+                alt=""
+                class="step-icon"
               />
             </div>
             <div>
@@ -591,7 +629,7 @@
       <div>
         <p class="fs-6 text-muted">Tour packages</p>
         <div class="d-lg-flex align-items-end justify-content-between gap-1">
-          <h1 style="font-size: 4rem">Our tourist destination</h1>
+          <h1 class="section-title">Our tourist destination</h1>
           <p class="w-50">
             Our tourist destinations offer an unrivaled blend of natural beauty
             and cultural richness
@@ -601,8 +639,7 @@
       <div class="tour-grid mt-4">
         <div class="position-relative d-flex justify-content-center tour-card">
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
-            style="right: 16px; top: 16px"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge badge-top-right"
           >
             <svg class="rating-star" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -612,14 +649,12 @@
             4.5
           </div>
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4"
-            style="left: 16px; top: 16px"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 badge-top-left"
           >
             3 Days
           </div>
           <div
-            class="position-absolute z-3 glass text-white p-3 rounded-4"
-            style="bottom: 24px"
+            class="position-absolute z-3 glass text-white p-3 rounded-4 tour-info-overlay"
           >
             <h6 class="fw-light opacity-50">20 December - 23 December</h6>
             <div class="d-flex justify-content-between gap-5">
@@ -629,14 +664,13 @@
           </div>
           <img
             src="./images/tour1.jpg"
-            alt=""
-            class="object-fit-cover rounded-5 z-0 shadow-lg tour-img"
+            alt="Boracay beach tour"
+            class="rounded-5 z-0 shadow-lg tour-img"
           />
         </div>
         <div class="position-relative d-flex justify-content-center tour-card">
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
-            style="right: 16px; top: 16px"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge badge-top-right"
           >
             <svg class="rating-star" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -646,14 +680,12 @@
             4.8
           </div>
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4"
-            style="left: 16px; top: 16px"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 badge-top-left"
           >
             7 Days
           </div>
           <div
-            class="position-absolute z-3 glass text-white p-3 rounded-4"
-            style="bottom: 24px"
+            class="position-absolute z-3 glass text-white p-3 rounded-4 tour-info-overlay"
           >
             <h6 class="fw-light opacity-50">16 December - 22 December</h6>
             <div class="d-flex justify-content-between gap-5">
@@ -663,14 +695,13 @@
           </div>
           <img
             src="./images/tour2.jpg"
-            alt=""
-            class="object-fit-cover rounded-5 z-0 shadow-lg tour-img"
+            alt="Siargao surfing tour"
+            class="rounded-5 z-0 shadow-lg tour-img"
           />
         </div>
         <div class="position-relative d-flex justify-content-center tour-card">
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
-            style="right: 16px; top: 16px"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge badge-top-right"
           >
             <svg class="rating-star" viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -680,14 +711,12 @@
             5
           </div>
           <div
-            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4"
-            style="left: 16px; top: 16px"
+            class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 badge-top-left"
           >
             5 Days
           </div>
           <div
-            class="position-absolute z-3 glass text-white p-3 rounded-4"
-            style="bottom: 24px"
+            class="position-absolute z-3 glass text-white p-3 rounded-4 tour-info-overlay"
           >
             <h6 class="fw-light opacity-50">20 December - 25 December</h6>
             <div class="d-flex justify-content-between gap-5">
@@ -697,8 +726,8 @@
           </div>
           <img
             src="./images/tour3.jpg"
-            alt=""
-            class="object-fit-cover rounded-5 z-0 shadow-lg tour-img"
+            alt="El Nido island hopping tour"
+            class="rounded-5 z-0 shadow-lg tour-img"
           />
         </div>
       </div>
