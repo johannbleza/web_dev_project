@@ -12,7 +12,6 @@ const LOCATION_ALIAS_MAP = {
 };
 
 const EXCHANGE_RATE_USD_TO_PHP = 56;
-const FALLBACK_HOTEL_IMAGE = "./images/palawan.avif";
 const DEFAULT_LOCATION = LOCATION_ALIAS_MAP.boracay;
 let clerkInstance = null;
 let bookingModalInstance = null;
@@ -46,15 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
   bookingFormState.priceDisplay = document.getElementById("bookingPriceValue");
   bookingFormState.metaDisplay = document.getElementById("bookingMeta");
   bookingFormState.imageEl = document.getElementById("bookingHotelImage");
-  bookingFormState.imageSrc = FALLBACK_HOTEL_IMAGE;
 
   initializeModals(bookingModalEl, authRequiredModalEl);
-  setDefaultBookingDates();
-
-  bookingFormState.startDateInput?.addEventListener(
-    "change",
-    syncEndDateWithStart
-  );
 
   if (bookingForm) {
     bookingForm.addEventListener("submit", handleBookingSubmit);
@@ -129,7 +121,7 @@ function buildHotelCard(hotel) {
     reviewCount !== null ? `${reviewCount} reviews` : "No reviews";
   const priceInfo = getPriceInfo(price_ranges);
   const priceRange = priceInfo.formatted;
-  const imageSrc = image || FALLBACK_HOTEL_IMAGE;
+  const imageSrc = image;
   const encodedHotelName = encodeURIComponent(name || "Selected hotel");
   const accommodationLabel = accommodation_type || "Hotel";
   const encodedPriceRange = encodeURIComponent(priceRange);
@@ -305,13 +297,13 @@ function handleHotelCardClick(card) {
     return;
   }
 
-  const decodedName = decodeURIComponent(card.dataset.hotelName || "");
-  bookingFormState.hotelInput.value = decodedName || "Selected hotel";
-  const accommodation = safeDecode(card.dataset.accommodation) || "Hotel";
-  const reviewsLabel = safeDecode(card.dataset.reviewsLabel) || "No reviews";
-  const ratingText = card.dataset.rating || "N/A";
-  const priceAmount = Number(card.dataset.priceAmount) || null;
-  const imageSrc = safeDecode(card.dataset.imageSrc) || FALLBACK_HOTEL_IMAGE;
+  const decodedName = decodeURIComponent(card.dataset.hotelName);
+  bookingFormState.hotelInput.value = decodedName;
+  const accommodation = card.dataset.accommodation;
+  const reviewsLabel = safeDecode(card.dataset.reviewsLabel);
+  const ratingText = card.dataset.rating;
+  const priceAmount = Number(card.dataset.priceAmount);
+  const imageSrc = safeDecode(card.dataset.imageSrc);
 
   bookingFormState.priceAmount = priceAmount;
   bookingFormState.imageSrc = imageSrc;
@@ -337,7 +329,6 @@ function handleHotelCardClick(card) {
     bookingFormState.imageEl.alt = `${decodedName} preview`;
   }
 
-  setDefaultBookingDates();
   bookingModalInstance.show();
 }
 
@@ -349,59 +340,38 @@ function handleBookingSubmit(event) {
     return;
   }
 
+  const userInfo = getAuthenticatedUserInfo();
+
   const bookingDetails = {
-    hotel: bookingFormState.hotelInput?.value || "",
-    startDate: bookingFormState.startDateInput?.value || "",
-    endDate: bookingFormState.endDateInput?.value || "",
-    guests: Number(bookingFormState.guestsInput?.value || 0),
-    pricePerNight: Number.isFinite(bookingFormState.priceAmount)
-      ? bookingFormState.priceAmount
-      : null,
-    info: bookingFormState.metaDisplay?.textContent || "",
+    hotel: bookingFormState.hotelInput.value,
+    startDate: bookingFormState.startDateInput.value,
+    endDate: bookingFormState.endDateInput?.value,
+    guests: Number(bookingFormState.guestsInput.value),
+    pricePerNight: bookingFormState.priceAmount,
+    info: bookingFormState.metaDisplay?.textContent,
     image: bookingFormState.imageSrc,
+    user: userInfo,
   };
 
-  const userInfo = getAuthenticatedUserInfo();
-  const payload = { booking: bookingDetails, user: userInfo };
-  console.log("Booking payload:", payload);
+  console.log(bookingDetails);
 
   event.target.reset();
-  if (bookingFormState.guestsInput) {
-    bookingFormState.guestsInput.value = 2;
-  }
-  bookingFormState.priceAmount = null;
-  bookingFormState.imageSrc = FALLBACK_HOTEL_IMAGE;
-  if (bookingFormState.priceDisplay) {
-    bookingFormState.priceDisplay.textContent = "0";
-  }
-  if (bookingFormState.metaDisplay) {
-    bookingFormState.metaDisplay.textContent = "Rating N/A • 0 reviews";
-  }
-  if (bookingFormState.imageEl) {
-    bookingFormState.imageEl.src = FALLBACK_HOTEL_IMAGE;
-    bookingFormState.imageEl.alt = "Selected hotel preview";
-  }
-  setDefaultBookingDates();
   bookingModalInstance?.hide();
 }
 
+// Clerk Authentication
 function getAuthenticatedUserInfo() {
   if (!clerkInstance?.user) {
     return { id: null, name: null, email: null };
   }
 
   const { user } = clerkInstance;
-  const email =
-    user.primaryEmailAddress?.emailAddress ||
-    user.emailAddresses?.[0]?.emailAddress ||
-    null;
-  const name =
-    user.fullName ||
-    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-    user.username ||
-    null;
 
-  return { id: user.id || null, name, email };
+  return {
+    id: user.id,
+    name: user.fullName,
+    email: user.emailAddresses[0].emailAddress,
+  };
 }
 
 function isUserAuthenticated() {
@@ -423,40 +393,6 @@ function triggerLogin() {
     afterSignInUrl: window.location.href,
     afterSignUpUrl: window.location.href,
   });
-}
-
-function setDefaultBookingDates() {
-  const today = getTodayDateString();
-
-  if (bookingFormState.startDateInput) {
-    bookingFormState.startDateInput.min = today;
-    if (!bookingFormState.startDateInput.value) {
-      bookingFormState.startDateInput.value = today;
-    }
-  }
-
-  syncEndDateWithStart();
-}
-
-function syncEndDateWithStart() {
-  if (!bookingFormState.startDateInput || !bookingFormState.endDateInput) {
-    return;
-  }
-
-  const startValue =
-    bookingFormState.startDateInput.value || getTodayDateString();
-  bookingFormState.endDateInput.min = startValue;
-
-  if (
-    !bookingFormState.endDateInput.value ||
-    bookingFormState.endDateInput.value < startValue
-  ) {
-    bookingFormState.endDateInput.value = startValue;
-  }
-}
-
-function getTodayDateString() {
-  return new Date().toISOString().split("T")[0];
 }
 
 function safeDecode(value) {
