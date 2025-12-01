@@ -1,349 +1,197 @@
-const API_BASE_URL = "https://data.xotelo.com/api";
-const RESULT_LIMIT = 6;
-const STRIPE_SERVER_URL = "http://localhost:3000";
+// Configuration
+const API_URL = "http://localhost:3000/api";
 
-const LOCATION_ALIAS_MAP = {
-  boracay: { key: "g294260", label: "Boracay, Philippines" },
-  palawan: { key: "g294255", label: "Palawan, Philippines" },
-  manila: { key: "g298573", label: "Manila, Philippines" },
-  cebu: { key: "g298460", label: "Cebu City, Philippines" },
-  bohol: { key: "g294259", label: "Bohol, Philippines" },
-  davao: { key: "g298459", label: "Davao City, Philippines" },
-  siargao: { key: "g674645", label: "Siargao Island, Philippines" },
+// State
+let clerk = null;
+let bookingModal = null;
+let authModal = null;
+
+const booking = {
+  hotel: "",
+  price: 0,
+  image: "",
+  meta: "",
 };
 
-const EXCHANGE_RATE_USD_TO_PHP = 56;
-const DEFAULT_LOCATION = LOCATION_ALIAS_MAP.boracay;
-let clerkInstance = null;
-let bookingModalInstance = null;
-let authRequiredModalInstance = null;
-const bookingFormState = {
-  hotelInput: null,
-  startDateInput: null,
-  endDateInput: null,
-  guestsInput: null,
-  priceDisplay: null,
-  metaDisplay: null,
-  imageEl: null,
-  priceAmount: null,
-  imageSrc: "",
+// DOM Elements
+const elements = {
+  // Search
+  searchForm: () => document.getElementById("hotelSearchForm"),
+  searchInput: () => document.getElementById("hotelSearchInput"),
+  resultsGrid: () => document.getElementById("hotelResultsGrid"),
+  statusText: () => document.getElementById("hotelResultsStatus"),
+
+  // Booking Form
+  bookingForm: () => document.getElementById("bookingForm"),
+  hotelInput: () => document.getElementById("bookingHotel"),
+  startDate: () => document.getElementById("bookingStartDate"),
+  endDate: () => document.getElementById("bookingEndDate"),
+  guests: () => document.getElementById("bookingGuests"),
+  priceDisplay: () => document.getElementById("bookingPriceValue"),
+  metaDisplay: () => document.getElementById("bookingMeta"),
+  hotelImage: () => document.getElementById("bookingHotelImage"),
+  submitBtn: () => document.querySelector('#bookingForm button[type="submit"]'),
+
+  // Auth
+  loginBtn: () => document.getElementById("loginButton"),
+  logoutBtn: () => document.getElementById("logoutButton"),
+  userBtn: () => document.getElementById("userButton"),
+  userAvatar: () => document.getElementById("userAvatar"),
+  modalLoginBtn: () => document.getElementById("modalLoginButton"),
 };
 
+// Initialize App
 document.addEventListener("DOMContentLoaded", () => {
-  const searchForm = document.getElementById("hotelSearchForm");
-  const searchInput = document.getElementById("hotelSearchInput");
-  const resultsGrid = document.getElementById("hotelResultsGrid");
-  const statusEl = document.getElementById("hotelResultsStatus");
-  const modalLoginButton = document.getElementById("modalLoginButton");
-  const bookingModalEl = document.getElementById("bookingModal");
-  const authRequiredModalEl = document.getElementById("authRequiredModal");
-  const bookingForm = document.getElementById("bookingForm");
-
-  bookingFormState.hotelInput = document.getElementById("bookingHotel");
-  bookingFormState.startDateInput = document.getElementById("bookingStartDate");
-  bookingFormState.endDateInput = document.getElementById("bookingEndDate");
-  bookingFormState.guestsInput = document.getElementById("bookingGuests");
-  bookingFormState.priceDisplay = document.getElementById("bookingPriceValue");
-  bookingFormState.metaDisplay = document.getElementById("bookingMeta");
-  bookingFormState.imageEl = document.getElementById("bookingHotelImage");
-
-  initializeModals(bookingModalEl, authRequiredModalEl);
-
-  if (bookingForm) {
-    bookingForm.addEventListener("submit", handleBookingSubmit);
-  }
-
-  if (modalLoginButton) {
-    modalLoginButton.addEventListener("click", () => {
-      triggerLogin();
-      authRequiredModalInstance?.hide();
-    });
-  }
-
-  searchForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-    const location = resolveLocationKey(searchInput.value);
-    loadHotels(location, resultsGrid, statusEl);
-  });
-
-  loadHotels(DEFAULT_LOCATION, resultsGrid, statusEl);
-  initializeClerkAuth();
+  initModals();
+  initSearch();
+  initBookingForm();
+  initAuth();
+  loadHotels("boracay");
 });
 
-async function loadHotels(location, resultsGrid, statusEl) {
-  statusEl.textContent = `Searching for hotels near ${location.label}...`;
-  resultsGrid.innerHTML = "";
+function initModals() {
+  const bookingEl = document.getElementById("bookingModal");
+  const authEl = document.getElementById("authRequiredModal");
+
+  if (bookingEl) bookingModal = new bootstrap.Modal(bookingEl);
+  if (authEl) authModal = new bootstrap.Modal(authEl);
+}
+
+function initSearch() {
+  elements.searchForm()?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const query = elements.searchInput()?.value || "boracay";
+    loadHotels(query);
+  });
+}
+
+function initBookingForm() {
+  elements.bookingForm()?.addEventListener("submit", handleBooking);
+}
+
+async function loadHotels(location) {
+  const grid = elements.resultsGrid();
+  const status = elements.statusText();
+
+  status.textContent = "Searching for hotels...";
+  grid.innerHTML = "";
 
   try {
-    const hotels = await fetchHotels(location.key);
-    if (!hotels.length) {
-      statusEl.textContent = `No hotels found for ${location.label}.`;
+    const res = await fetch(
+      `${API_URL}/hotels?location=${encodeURIComponent(location)}`
+    );
+    const data = await res.json();
+
+    if (!data.hotels?.length) {
+      status.textContent = `No hotels found for ${data.location}.`;
       return;
     }
-    const topHotels = hotels.slice(0, RESULT_LIMIT);
-    resultsGrid.innerHTML = topHotels.map(buildHotelCard).join("");
-    attachHotelCardHandlers(resultsGrid);
-    statusEl.textContent = `Showing ${topHotels.length} stays for ${location.label}.`;
+
+    grid.innerHTML = data.hotels.map(createHotelCard).join("");
+    attachCardListeners(grid);
+    status.textContent = `Showing ${data.count} stays for ${data.location}.`;
   } catch (error) {
     console.error(error);
-    statusEl.textContent = "Error fetching hotel data.";
+    status.textContent = "Error fetching hotels.";
   }
 }
 
-async function fetchHotels(locationKey) {
-  const url = `${API_BASE_URL}/list?location_key=${locationKey}&limit=${RESULT_LIMIT}&offset=0&sort=best_value`;
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(
-    url
-  )}`;
-
-  try {
-    const response = await fetch(proxyUrl, {
-      headers: { Accept: "application/json" },
-    });
-    const data = await response.json();
-    if (data.error)
-      throw new Error(data.error.message || "Error fetching data.");
-    return data.result.list || [];
-  } catch (error) {
-    console.warn("Error fetching hotel data:", error);
-  }
-}
-
-function buildHotelCard(hotel) {
-  const { name, accommodation_type, review_summary, price_ranges, url, image } =
-    hotel;
-  const ratingValue =
-    typeof review_summary?.rating === "number"
-      ? review_summary.rating.toFixed(1)
-      : review_summary?.rating || "N/A";
-  const reviewCount =
-    typeof review_summary?.count === "number" ? review_summary.count : null;
-  const reviewLabel =
-    reviewCount !== null ? `${reviewCount} reviews` : "No reviews";
-  const priceInfo = getPriceInfo(price_ranges);
-  const priceRange = priceInfo.formatted;
-  const imageSrc = image;
-  const encodedHotelName = encodeURIComponent(name || "Selected hotel");
-  const accommodationLabel = accommodation_type || "Hotel";
-  const encodedPriceRange = encodeURIComponent(priceRange);
-  const encodedReviewLabel = encodeURIComponent(reviewLabel);
-  const encodedAccommodation = encodeURIComponent(accommodationLabel);
-  const encodedImageSrc = encodeURIComponent(imageSrc);
-  const numberPrice = Number.isFinite(priceInfo.amount) ? priceInfo.amount : "";
+function createHotelCard(hotel) {
+  const data = {
+    name: encodeURIComponent(hotel.name),
+    price: hotel.priceAmount || "",
+    rating: hotel.rating,
+    reviews: encodeURIComponent(hotel.reviewLabel),
+    accommodation: encodeURIComponent(hotel.accommodation),
+    image: encodeURIComponent(hotel.image),
+  };
 
   return `
-    <div class="position-relative d-flex justify-content-center tour-card hotel-card" data-hotel-name="${encodedHotelName}" data-price-range="${encodedPriceRange}" data-price-amount="${numberPrice}" data-rating="${ratingValue}" data-reviews-label="${encodedReviewLabel}" data-accommodation="${encodedAccommodation}" data-image-src="${encodedImageSrc}">
-        <div
-        class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
-        style="right: 16px; top: 16px"
-        >
+    <div class="position-relative d-flex justify-content-center tour-card hotel-card"
+         data-name="${data.name}"
+         data-price="${data.price}"
+         data-rating="${data.rating}"
+         data-reviews="${data.reviews}"
+         data-accommodation="${data.accommodation}"
+         data-image="${data.image}">
+      <div class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
+           style="right: 16px; top: 16px">
         <svg class="rating-star" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-            d="M12 3.5 14.25 8l5.04.73-3.64 3.54.86 5.01L12 14.9 7.49 17.28l.86-5.01-3.64-3.54 5.04-.73Z"
-            ></path>
+          <path d="M12 3.5 14.25 8l5.04.73-3.64 3.54.86 5.01L12 14.9 7.49 17.28l.86-5.01-3.64-3.54 5.04-.73Z"></path>
         </svg>
-        ${ratingValue}
-        
-        </div>
-        <div
-        class="glass position-absolute z-3 p-2 rounded-5 text-white px-4"
-        style="left: 16px; top: 16px"
-        >
-        ${reviewLabel}
-        </div>
-        <div
-        class="position-absolute z-3 glass text-white p-3 rounded-4 m-2"
-        style="bottom: 24px"
-        >
+        ${hotel.rating}
+      </div>
+      <div class="glass position-absolute z-3 p-2 rounded-5 text-white px-4"
+           style="left: 16px; top: 16px">
+        ${hotel.reviewLabel}
+      </div>
+      <div class="position-absolute z-3 glass text-white p-3 rounded-4 m-2"
+           style="bottom: 24px">
         <h6 class="fw-light opacity-50">Hotel</h6>
         <div class="d-flex justify-content-between gap-5">
-            <p class="fw-light">${name}</p>
-            <p class="fw-light text-end">${priceRange}</p>
+          <p class="fw-light">${hotel.name}</p>
+          <p class="fw-light text-end">${hotel.price}</p>
         </div>
-        </div>
-        <img
-        src="${imageSrc}"
-        alt=""
-        class="object-fit-cover rounded-5 z-0 shadow-lg tour-img"
-        />
+      </div>
+      <img src="${hotel.image}" alt="${hotel.name}"
+           class="object-fit-cover rounded-5 z-0 shadow-lg tour-img" />
     </div>
-
   `;
 }
 
-function getPriceInfo(range) {
-  if (
-    !range ||
-    typeof range.minimum !== "number" ||
-    typeof range.maximum !== "number"
-  ) {
-    return { formatted: "Rate info unavailable", amount: null };
+function attachCardListeners(container) {
+  container.querySelectorAll(".hotel-card").forEach((card) => {
+    card.addEventListener("click", () => openBookingModal(card));
+  });
+}
+
+function openBookingModal(card) {
+  if (!isLoggedIn()) {
+    authModal?.show();
+    return;
   }
 
-  const maxPricePHP = Math.round(range.maximum * EXCHANGE_RATE_USD_TO_PHP);
-  const formatter = new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    maximumFractionDigits: 0,
-  });
-
-  return {
-    formatted: `${formatter.format(maxPricePHP)} per night`,
-    amount: maxPricePHP,
+  const decode = (val) => {
+    try {
+      return decodeURIComponent(val || "");
+    } catch {
+      return val || "";
+    }
   };
+
+  const name = decode(card.dataset.name);
+  const price = Number(card.dataset.price) || 0;
+  const image = decode(card.dataset.image);
+  const accommodation = decode(card.dataset.accommodation);
+  const rating = card.dataset.rating;
+  const reviews = decode(card.dataset.reviews);
+
+  // Update state
+  booking.hotel = name;
+  booking.price = price;
+  booking.image = image;
+  booking.meta = `${accommodation} • Rating ${rating} • ${reviews}`;
+
+  // Update form
+  elements.hotelInput().value = name;
+  elements.priceDisplay().textContent = price || "N/A";
+  elements.metaDisplay().textContent = booking.meta;
+  elements.hotelImage().src = image;
+  elements.hotelImage().alt = `${name} preview`;
+
+  bookingModal?.show();
 }
 
-function resolveLocationKey(query) {
-  const normalizedQuery = query.trim().toLowerCase();
-  return LOCATION_ALIAS_MAP[normalizedQuery] || DEFAULT_LOCATION;
-}
+async function handleBooking(e) {
+  e.preventDefault();
 
-async function initializeClerkAuth() {
-  const loginButton = document.getElementById("loginButton");
-  const logoutButton = document.getElementById("logoutButton");
-  const userButton = document.getElementById("userButton");
-  const userAvatar = document.getElementById("userAvatar");
-
-  try {
-    const clerk = await waitForClerk();
-    await clerk.load();
-    clerkInstance = clerk;
-
-    loginButton.addEventListener("click", triggerLogin);
-
-    logoutButton.addEventListener("click", () => clerk.signOut());
-    userButton.addEventListener("click", () => clerk.openUserProfile());
-
-    const renderAuthState = () => {
-      const isSignedIn = Boolean(clerk.user);
-
-      loginButton.classList.toggle("d-none", isSignedIn);
-      logoutButton.classList.toggle("d-none", !isSignedIn);
-      userButton.classList.toggle("d-none", !isSignedIn);
-
-      if (isSignedIn) {
-        const avatarUrl =
-          clerk.user.imageUrl || clerk.user.profileImageUrl || userAvatar.src;
-        userAvatar.src = avatarUrl;
-        userAvatar.alt = `${
-          clerk.user.fullName || clerk.user.firstName || "Signed-in user"
-        } profile photo`;
-      }
-    };
-
-    renderAuthState();
-
-    if (typeof clerk.addListener === "function") {
-      clerk.addListener(renderAuthState);
-    } else {
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden) {
-          renderAuthState();
-        }
-      });
-    }
-  } catch (error) {
-    console.error("Failed to initialize Clerk:", error);
-  }
-}
-
-function waitForClerk() {
-  return new Promise((resolve, reject) => {
-    const MAX_WAIT_TIME = 10000;
-    const intervalMs = 50;
-    let elapsed = 0;
-
-    if (window.Clerk) {
-      resolve(window.Clerk);
-      return;
-    }
-
-    const intervalId = setInterval(() => {
-      elapsed += intervalMs;
-      if (window.Clerk) {
-        clearInterval(intervalId);
-        resolve(window.Clerk);
-      } else if (elapsed >= MAX_WAIT_TIME) {
-        clearInterval(intervalId);
-        reject(new Error("Clerk failed to load"));
-      }
-    }, intervalMs);
-  });
-}
-
-function initializeModals(bookingModalEl, authRequiredModalEl) {
-  if (bookingModalEl && window.bootstrap?.Modal) {
-    bookingModalInstance = new window.bootstrap.Modal(bookingModalEl);
-  }
-
-  if (authRequiredModalEl && window.bootstrap?.Modal) {
-    authRequiredModalInstance = new window.bootstrap.Modal(authRequiredModalEl);
-  }
-}
-
-function attachHotelCardHandlers(container) {
-  const cards = container?.querySelectorAll?.(".hotel-card") || [];
-  cards.forEach((card) => {
-    card.addEventListener("click", () => handleHotelCardClick(card));
-  });
-}
-
-function handleHotelCardClick(card) {
-  if (!isUserAuthenticated()) {
-    showAuthRequiredModal();
+  if (!isLoggedIn()) {
+    authModal?.show();
     return;
   }
 
-  if (!bookingModalInstance || !bookingFormState.hotelInput) {
-    return;
-  }
-
-  const decodedName = decodeURIComponent(card.dataset.hotelName);
-  bookingFormState.hotelInput.value = decodedName;
-  const accommodation = card.dataset.accommodation;
-  const reviewsLabel = safeDecode(card.dataset.reviewsLabel);
-  const ratingText = card.dataset.rating;
-  const priceAmount = Number(card.dataset.priceAmount);
-  const imageSrc = safeDecode(card.dataset.imageSrc);
-
-  bookingFormState.priceAmount = priceAmount;
-  bookingFormState.imageSrc = imageSrc;
-
-  if (bookingFormState.priceDisplay) {
-    const priceDisplayValue = Number.isFinite(priceAmount)
-      ? priceAmount
-      : "N/A";
-    bookingFormState.priceDisplay.textContent = priceDisplayValue;
-  }
-
-  if (bookingFormState.metaDisplay) {
-    const metaParts = [
-      accommodation,
-      `Rating ${ratingText}`,
-      reviewsLabel,
-    ].filter(Boolean);
-    bookingFormState.metaDisplay.textContent = metaParts.join(" • ");
-  }
-
-  if (bookingFormState.imageEl) {
-    bookingFormState.imageEl.src = imageSrc;
-    bookingFormState.imageEl.alt = `${decodedName} preview`;
-  }
-
-  bookingModalInstance.show();
-}
-
-async function handleBookingSubmit(event) {
-  event.preventDefault();
-
-  if (!isUserAuthenticated()) {
-    showAuthRequiredModal();
-    return;
-  }
-
-  const userInfo = getAuthenticatedUserInfo();
-  const startDate = bookingFormState.startDateInput.value;
-  const endDate = bookingFormState.endDateInput?.value;
+  const startDate = elements.startDate().value;
+  const endDate = elements.endDate().value;
   const nights = calculateNights(startDate, endDate);
 
   if (nights < 1) {
@@ -351,116 +199,124 @@ async function handleBookingSubmit(event) {
     return;
   }
 
-  const bookingDetails = {
-    hotel: bookingFormState.hotelInput.value,
-    startDate: startDate,
-    endDate: endDate,
-    guests: Number(bookingFormState.guestsInput.value),
-    pricePerNight: bookingFormState.priceAmount,
-    nights: nights,
-    info: bookingFormState.metaDisplay?.textContent,
-    image: bookingFormState.imageSrc,
-    user: userInfo,
+  const bookingData = {
+    hotel: booking.hotel,
+    startDate,
+    endDate,
+    guests: Number(elements.guests().value),
+    pricePerNight: booking.price,
+    nights,
+    image: booking.image,
   };
 
-  console.log(bookingDetails);
-
-  // Redirect to Stripe Checkout
-  await redirectToStripeCheckout(bookingDetails);
+  await checkout(bookingData);
 }
 
-function calculateNights(startDate, endDate) {
-  if (!startDate || !endDate) return 0;
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diffTime = end - start;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays > 0 ? diffDays : 0;
+function calculateNights(start, end) {
+  if (!start || !end) return 0;
+  const diff = new Date(end) - new Date(start);
+  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+  return days > 0 ? days : 0;
 }
 
-async function redirectToStripeCheckout(bookingDetails) {
+async function checkout(data) {
+  const btn = elements.submitBtn();
+
   try {
-    const submitButton = document.querySelector(
-      '#bookingForm button[type="submit"]'
-    );
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = "Redirecting...";
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Redirecting...";
     }
 
-    const response = await fetch(
-      `${STRIPE_SERVER_URL}/create-checkout-session`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(bookingDetails),
-      }
-    );
+    const res = await fetch(`${API_URL}/checkout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
 
-    const data = await response.json();
+    const result = await res.json();
 
-    if (data.url) {
-      window.location.href = data.url;
+    if (result.url) {
+      window.location.href = result.url;
     } else {
-      throw new Error(data.error || "Failed to create checkout session");
+      throw new Error(result.error || "Checkout failed");
     }
   } catch (error) {
     console.error("Checkout error:", error);
     alert("Failed to redirect to checkout. Please try again.");
 
-    const submitButton = document.querySelector(
-      '#bookingForm button[type="submit"]'
-    );
-    if (submitButton) {
-      submitButton.disabled = false;
-      submitButton.textContent = "Submit";
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Submit";
     }
   }
 }
 
-// Clerk Authentication
-function getAuthenticatedUserInfo() {
-  if (!clerkInstance?.user) {
-    return { id: null, name: null, email: null };
-  }
+// Authentication (Clerk)
+async function initAuth() {
+  try {
+    clerk = await waitForClerk();
+    await clerk.load();
 
-  const { user } = clerkInstance;
+    elements.loginBtn()?.addEventListener("click", login);
+    elements.logoutBtn()?.addEventListener("click", () => clerk.signOut());
+    elements
+      .userBtn()
+      ?.addEventListener("click", () => clerk.openUserProfile());
+    elements.modalLoginBtn()?.addEventListener("click", () => {
+      login();
+      authModal?.hide();
+    });
 
-  return {
-    id: user.id,
-    name: user.fullName,
-    email: user.emailAddresses[0].emailAddress,
-  };
-}
-
-function isUserAuthenticated() {
-  return Boolean(clerkInstance?.user);
-}
-
-function showAuthRequiredModal() {
-  if (authRequiredModalInstance) {
-    authRequiredModalInstance.show();
+    updateAuthUI();
+    clerk.addListener?.(updateAuthUI);
+  } catch (error) {
+    console.error("Auth init failed:", error);
   }
 }
 
-function triggerLogin() {
-  if (!clerkInstance) {
-    return;
-  }
+function waitForClerk() {
+  return new Promise((resolve, reject) => {
+    if (window.Clerk) return resolve(window.Clerk);
 
-  clerkInstance.openSignIn({
-    afterSignInUrl: window.location.href,
-    afterSignUpUrl: window.location.href,
+    let elapsed = 0;
+    const interval = setInterval(() => {
+      elapsed += 50;
+      if (window.Clerk) {
+        clearInterval(interval);
+        resolve(window.Clerk);
+      } else if (elapsed >= 10000) {
+        clearInterval(interval);
+        reject(new Error("Clerk timeout"));
+      }
+    }, 50);
   });
 }
 
-function safeDecode(value) {
-  if (!value) return "";
-  try {
-    return decodeURIComponent(value);
-  } catch (error) {
-    return value;
+function updateAuthUI() {
+  const loggedIn = isLoggedIn();
+
+  elements.loginBtn()?.classList.toggle("d-none", loggedIn);
+  elements.logoutBtn()?.classList.toggle("d-none", !loggedIn);
+  elements.userBtn()?.classList.toggle("d-none", !loggedIn);
+
+  if (loggedIn && clerk.user) {
+    const avatar = elements.userAvatar();
+    if (avatar) {
+      avatar.src =
+        clerk.user.imageUrl || clerk.user.profileImageUrl || avatar.src;
+      avatar.alt = `${clerk.user.fullName || "User"} profile`;
+    }
   }
+}
+
+function isLoggedIn() {
+  return Boolean(clerk?.user);
+}
+
+function login() {
+  clerk?.openSignIn({
+    afterSignInUrl: window.location.href,
+    afterSignUpUrl: window.location.href,
+  });
 }
