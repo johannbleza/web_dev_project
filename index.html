@@ -789,6 +789,148 @@
       </div>
     </footer>
 
+    <!-- Booking Modal -->
+    <div
+      class="modal fade"
+      id="bookingModal"
+      tabindex="-1"
+      aria-labelledby="bookingModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="bookingModalLabel">
+              Complete your booking
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <form id="bookingForm" class="d-flex flex-column gap-3">
+              <div>
+                <label class="form-label" for="bookingHotel">Hotel</label>
+                <input
+                  id="bookingHotel"
+                  name="hotel"
+                  class="form-control"
+                  type="text"
+                  readonly
+                />
+              </div>
+              <div
+                class="border rounded-3 p-3 bg-light-subtle d-flex gap-3 align-items-center"
+              >
+                <img
+                  id="bookingHotelImage"
+                  src="./images/palawan.avif"
+                  alt="Selected hotel preview"
+                  class="rounded-3 object-fit-cover"
+                  style="width: 120px; height: 90px"
+                />
+                <div class="flex-grow-1">
+                  <p class="text-uppercase small text-muted mb-1">Details</p>
+                  <p class="mb-1 fw-semibold">Price per night (PHP)</p>
+                  <p class="fs-4 mb-1" id="bookingPriceValue">0</p>
+                  <p class="mb-0 text-muted" id="bookingMeta">
+                    Rating N/A • 0 reviews
+                  </p>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="bookingStartDate"
+                    >Start date</label
+                  >
+                  <input
+                    id="bookingStartDate"
+                    name="startDate"
+                    class="form-control"
+                    type="date"
+                    required
+                  />
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="form-label" for="bookingEndDate"
+                    >End date</label
+                  >
+                  <input
+                    id="bookingEndDate"
+                    name="endDate"
+                    class="form-control"
+                    type="date"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="form-label" for="bookingGuests"
+                  >Guests (pax)</label
+                >
+                <input
+                  id="bookingGuests"
+                  name="guests"
+                  class="form-control"
+                  type="number"
+                  min="1"
+                  value="2"
+                  required
+                />
+              </div>
+              <div class="text-end">
+                <button class="btn btn-dark" type="submit">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth Required Modal -->
+    <div
+      class="modal fade"
+      id="authRequiredModal"
+      tabindex="-1"
+      aria-labelledby="authRequiredModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="authRequiredModalLabel">
+              Login required
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            ></button>
+          </div>
+          <div class="modal-body">
+            Please sign in to continue with your booking. Once you are signed
+            in, click a hotel card again to provide your details.
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              data-bs-dismiss="modal"
+            >
+              Close
+            </button>
+            <button type="button" class="btn btn-primary" id="modalLoginButton">
+              Login
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <script
       async
       crossorigin="anonymous"

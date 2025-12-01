@@ -12,13 +12,60 @@ const LOCATION_ALIAS_MAP = {
 };
 
 const EXCHANGE_RATE_USD_TO_PHP = 56;
+const FALLBACK_HOTEL_IMAGE = "./images/palawan.avif";
 const DEFAULT_LOCATION = LOCATION_ALIAS_MAP.boracay;
+let clerkInstance = null;
+let bookingModalInstance = null;
+let authRequiredModalInstance = null;
+const bookingFormState = {
+  hotelInput: null,
+  startDateInput: null,
+  endDateInput: null,
+  guestsInput: null,
+  priceDisplay: null,
+  metaDisplay: null,
+  imageEl: null,
+  priceAmount: null,
+  imageSrc: "",
+};
 
 document.addEventListener("DOMContentLoaded", () => {
   const searchForm = document.getElementById("hotelSearchForm");
   const searchInput = document.getElementById("hotelSearchInput");
   const resultsGrid = document.getElementById("hotelResultsGrid");
   const statusEl = document.getElementById("hotelResultsStatus");
+  const modalLoginButton = document.getElementById("modalLoginButton");
+  const bookingModalEl = document.getElementById("bookingModal");
+  const authRequiredModalEl = document.getElementById("authRequiredModal");
+  const bookingForm = document.getElementById("bookingForm");
+
+  bookingFormState.hotelInput = document.getElementById("bookingHotel");
+  bookingFormState.startDateInput = document.getElementById("bookingStartDate");
+  bookingFormState.endDateInput = document.getElementById("bookingEndDate");
+  bookingFormState.guestsInput = document.getElementById("bookingGuests");
+  bookingFormState.priceDisplay = document.getElementById("bookingPriceValue");
+  bookingFormState.metaDisplay = document.getElementById("bookingMeta");
+  bookingFormState.imageEl = document.getElementById("bookingHotelImage");
+  bookingFormState.imageSrc = FALLBACK_HOTEL_IMAGE;
+
+  initializeModals(bookingModalEl, authRequiredModalEl);
+  setDefaultBookingDates();
+
+  bookingFormState.startDateInput?.addEventListener(
+    "change",
+    syncEndDateWithStart
+  );
+
+  if (bookingForm) {
+    bookingForm.addEventListener("submit", handleBookingSubmit);
+  }
+
+  if (modalLoginButton) {
+    modalLoginButton.addEventListener("click", () => {
+      triggerLogin();
+      authRequiredModalInstance?.hide();
+    });
+  }
 
   searchForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -42,6 +89,7 @@ async function loadHotels(location, resultsGrid, statusEl) {
     }
     const topHotels = hotels.slice(0, RESULT_LIMIT);
     resultsGrid.innerHTML = topHotels.map(buildHotelCard).join("");
+    attachHotelCardHandlers(resultsGrid);
     statusEl.textContent = `Showing ${topHotels.length} stays for ${location.label}.`;
   } catch (error) {
     console.error(error);
@@ -71,13 +119,27 @@ async function fetchHotels(locationKey) {
 function buildHotelCard(hotel) {
   const { name, accommodation_type, review_summary, price_ranges, url, image } =
     hotel;
-  const rating = review_summary?.rating || "N/A";
-  const reviews = review_summary?.count || "No reviews";
-  const priceRange = formatPriceRange(price_ranges);
-  const imageSrc = image || "./images/palawan.avif";
+  const ratingValue =
+    typeof review_summary?.rating === "number"
+      ? review_summary.rating.toFixed(1)
+      : review_summary?.rating || "N/A";
+  const reviewCount =
+    typeof review_summary?.count === "number" ? review_summary.count : null;
+  const reviewLabel =
+    reviewCount !== null ? `${reviewCount} reviews` : "No reviews";
+  const priceInfo = getPriceInfo(price_ranges);
+  const priceRange = priceInfo.formatted;
+  const imageSrc = image || FALLBACK_HOTEL_IMAGE;
+  const encodedHotelName = encodeURIComponent(name || "Selected hotel");
+  const accommodationLabel = accommodation_type || "Hotel";
+  const encodedPriceRange = encodeURIComponent(priceRange);
+  const encodedReviewLabel = encodeURIComponent(reviewLabel);
+  const encodedAccommodation = encodeURIComponent(accommodationLabel);
+  const encodedImageSrc = encodeURIComponent(imageSrc);
+  const numberPrice = Number.isFinite(priceInfo.amount) ? priceInfo.amount : "";
 
   return `
-    <div class="position-relative d-flex justify-content-center tour-card">
+    <div class="position-relative d-flex justify-content-center tour-card hotel-card" data-hotel-name="${encodedHotelName}" data-price-range="${encodedPriceRange}" data-price-amount="${numberPrice}" data-rating="${ratingValue}" data-reviews-label="${encodedReviewLabel}" data-accommodation="${encodedAccommodation}" data-image-src="${encodedImageSrc}">
         <div
         class="glass position-absolute z-3 p-2 rounded-5 text-white px-4 d-flex gap-2 rating-badge"
         style="right: 16px; top: 16px"
@@ -87,14 +149,14 @@ function buildHotelCard(hotel) {
             d="M12 3.5 14.25 8l5.04.73-3.64 3.54.86 5.01L12 14.9 7.49 17.28l.86-5.01-3.64-3.54 5.04-.73Z"
             ></path>
         </svg>
-        ${rating}
+        ${ratingValue}
         
         </div>
         <div
         class="glass position-absolute z-3 p-2 rounded-5 text-white px-4"
         style="left: 16px; top: 16px"
         >
-        ${reviews} Reviews
+        ${reviewLabel}
         </div>
         <div
         class="position-absolute z-3 glass text-white p-3 rounded-4 m-2"
@@ -116,27 +178,26 @@ function buildHotelCard(hotel) {
   `;
 }
 
-function formatPriceRange(range) {
+function getPriceInfo(range) {
   if (
     !range ||
     typeof range.minimum !== "number" ||
     typeof range.maximum !== "number"
   ) {
-    return "Rate info unavailable";
+    return { formatted: "Rate info unavailable", amount: null };
   }
 
-  // Convert USD to PHP
-  const maxPricePHP = range.maximum * EXCHANGE_RATE_USD_TO_PHP;
-
+  const maxPricePHP = Math.round(range.maximum * EXCHANGE_RATE_USD_TO_PHP);
   const formatter = new Intl.NumberFormat("en-PH", {
     style: "currency",
     currency: "PHP",
     maximumFractionDigits: 0,
   });
 
-  const maxRate = formatter.format(maxPricePHP);
-
-  return `${maxRate} per night`;
+  return {
+    formatted: `${formatter.format(maxPricePHP)} per night`,
+    amount: maxPricePHP,
+  };
 }
 
 function resolveLocationKey(query) {
@@ -153,13 +214,9 @@ async function initializeClerkAuth() {
   try {
     const clerk = await waitForClerk();
     await clerk.load();
+    clerkInstance = clerk;
 
-    loginButton.addEventListener("click", () => {
-      clerk.openSignIn({
-        afterSignInUrl: window.location.href,
-        afterSignUpUrl: window.location.href,
-      });
-    });
+    loginButton.addEventListener("click", triggerLogin);
 
     logoutButton.addEventListener("click", () => clerk.signOut());
     userButton.addEventListener("click", () => clerk.openUserProfile());
@@ -219,4 +276,194 @@ function waitForClerk() {
       }
     }, intervalMs);
   });
+}
+
+function initializeModals(bookingModalEl, authRequiredModalEl) {
+  if (bookingModalEl && window.bootstrap?.Modal) {
+    bookingModalInstance = new window.bootstrap.Modal(bookingModalEl);
+  }
+
+  if (authRequiredModalEl && window.bootstrap?.Modal) {
+    authRequiredModalInstance = new window.bootstrap.Modal(authRequiredModalEl);
+  }
+}
+
+function attachHotelCardHandlers(container) {
+  const cards = container?.querySelectorAll?.(".hotel-card") || [];
+  cards.forEach((card) => {
+    card.addEventListener("click", () => handleHotelCardClick(card));
+  });
+}
+
+function handleHotelCardClick(card) {
+  if (!isUserAuthenticated()) {
+    showAuthRequiredModal();
+    return;
+  }
+
+  if (!bookingModalInstance || !bookingFormState.hotelInput) {
+    return;
+  }
+
+  const decodedName = decodeURIComponent(card.dataset.hotelName || "");
+  bookingFormState.hotelInput.value = decodedName || "Selected hotel";
+  const accommodation = safeDecode(card.dataset.accommodation) || "Hotel";
+  const reviewsLabel = safeDecode(card.dataset.reviewsLabel) || "No reviews";
+  const ratingText = card.dataset.rating || "N/A";
+  const priceAmount = Number(card.dataset.priceAmount) || null;
+  const imageSrc = safeDecode(card.dataset.imageSrc) || FALLBACK_HOTEL_IMAGE;
+
+  bookingFormState.priceAmount = priceAmount;
+  bookingFormState.imageSrc = imageSrc;
+
+  if (bookingFormState.priceDisplay) {
+    const priceDisplayValue = Number.isFinite(priceAmount)
+      ? priceAmount
+      : "N/A";
+    bookingFormState.priceDisplay.textContent = priceDisplayValue;
+  }
+
+  if (bookingFormState.metaDisplay) {
+    const metaParts = [
+      accommodation,
+      `Rating ${ratingText}`,
+      reviewsLabel,
+    ].filter(Boolean);
+    bookingFormState.metaDisplay.textContent = metaParts.join(" • ");
+  }
+
+  if (bookingFormState.imageEl) {
+    bookingFormState.imageEl.src = imageSrc;
+    bookingFormState.imageEl.alt = `${decodedName} preview`;
+  }
+
+  setDefaultBookingDates();
+  bookingModalInstance.show();
+}
+
+function handleBookingSubmit(event) {
+  event.preventDefault();
+
+  if (!isUserAuthenticated()) {
+    showAuthRequiredModal();
+    return;
+  }
+
+  const bookingDetails = {
+    hotel: bookingFormState.hotelInput?.value || "",
+    startDate: bookingFormState.startDateInput?.value || "",
+    endDate: bookingFormState.endDateInput?.value || "",
+    guests: Number(bookingFormState.guestsInput?.value || 0),
+    pricePerNight: Number.isFinite(bookingFormState.priceAmount)
+      ? bookingFormState.priceAmount
+      : null,
+    info: bookingFormState.metaDisplay?.textContent || "",
+    image: bookingFormState.imageSrc,
+  };
+
+  const userInfo = getAuthenticatedUserInfo();
+  const payload = { booking: bookingDetails, user: userInfo };
+  console.log("Booking payload:", payload);
+
+  event.target.reset();
+  if (bookingFormState.guestsInput) {
+    bookingFormState.guestsInput.value = 2;
+  }
+  bookingFormState.priceAmount = null;
+  bookingFormState.imageSrc = FALLBACK_HOTEL_IMAGE;
+  if (bookingFormState.priceDisplay) {
+    bookingFormState.priceDisplay.textContent = "0";
+  }
+  if (bookingFormState.metaDisplay) {
+    bookingFormState.metaDisplay.textContent = "Rating N/A • 0 reviews";
+  }
+  if (bookingFormState.imageEl) {
+    bookingFormState.imageEl.src = FALLBACK_HOTEL_IMAGE;
+    bookingFormState.imageEl.alt = "Selected hotel preview";
+  }
+  setDefaultBookingDates();
+  bookingModalInstance?.hide();
+}
+
+function getAuthenticatedUserInfo() {
+  if (!clerkInstance?.user) {
+    return { id: null, name: null, email: null };
+  }
+
+  const { user } = clerkInstance;
+  const email =
+    user.primaryEmailAddress?.emailAddress ||
+    user.emailAddresses?.[0]?.emailAddress ||
+    null;
+  const name =
+    user.fullName ||
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    user.username ||
+    null;
+
+  return { id: user.id || null, name, email };
+}
+
+function isUserAuthenticated() {
+  return Boolean(clerkInstance?.user);
+}
+
+function showAuthRequiredModal() {
+  if (authRequiredModalInstance) {
+    authRequiredModalInstance.show();
+  }
+}
+
+function triggerLogin() {
+  if (!clerkInstance) {
+    return;
+  }
+
+  clerkInstance.openSignIn({
+    afterSignInUrl: window.location.href,
+    afterSignUpUrl: window.location.href,
+  });
+}
+
+function setDefaultBookingDates() {
+  const today = getTodayDateString();
+
+  if (bookingFormState.startDateInput) {
+    bookingFormState.startDateInput.min = today;
+    if (!bookingFormState.startDateInput.value) {
+      bookingFormState.startDateInput.value = today;
+    }
+  }
+
+  syncEndDateWithStart();
+}
+
+function syncEndDateWithStart() {
+  if (!bookingFormState.startDateInput || !bookingFormState.endDateInput) {
+    return;
+  }
+
+  const startValue =
+    bookingFormState.startDateInput.value || getTodayDateString();
+  bookingFormState.endDateInput.min = startValue;
+
+  if (
+    !bookingFormState.endDateInput.value ||
+    bookingFormState.endDateInput.value < startValue
+  ) {
+    bookingFormState.endDateInput.value = startValue;
+  }
+}
+
+function getTodayDateString() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function safeDecode(value) {
+  if (!value) return "";
+  try {
+    return decodeURIComponent(value);
+  } catch (error) {
+    return value;
+  }
 }
