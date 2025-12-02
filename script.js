@@ -109,10 +109,11 @@ function createHotelCard(hotel) {
         </svg>
         ${hotel.rating}
       </div>
-      <div class="glass position-absolute z-3 p-2 rounded-5 text-white px-4"
-           style="left: 16px; top: 16px">
-        ${hotel.reviewLabel}
-      </div>
+      <a class="glass position-absolute z-3 p-2 rounded-5 text-white px-4"
+           style="left: 16px; top: 16px; text-decoration: none;"
+           href="${hotel.url}" onclick="event.stopPropagation()" target="_blank">
+           View
+      </a>
       <div class="position-absolute z-3 glass text-white p-3 rounded-4 m-2"
            style="bottom: 24px">
         <h6 class="fw-light opacity-50">Hotel</h6>

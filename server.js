@@ -50,7 +50,7 @@ function formatPrice(priceRanges) {
 }
 
 function formatHotel(hotel) {
-  const { name, accommodation_type, review_summary, price_ranges, image } =
+  const { name, accommodation_type, review_summary, price_ranges, image, url } =
     hotel;
   const priceInfo = formatPrice(price_ranges);
 
@@ -65,6 +65,7 @@ function formatHotel(hotel) {
     price: priceInfo.formatted,
     priceAmount: priceInfo.amount,
     image: image || "",
+    url: url || "",
   };
 }
 
