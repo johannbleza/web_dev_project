@@ -1,0 +1,404 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background-color: #f8f9fa;
+  color: #111;
+  letter-spacing: -0.02em;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.input {
+  all: unset;
+}
+
+.glass {
+  background-color: #ffffff20;
+  backdrop-filter: blur(8px);
+}
+
+input::placeholder {
+  color: #ffffffc1;
+}
+
+.hero-title {
+  font-size: clamp(2.75rem, 12vw, 7rem);
+}
+
+.search {
+  width: min(90vw, 24rem);
+}
+
+.favorites-grid,
+.tour-grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.favorite-card,
+.tour-card {
+  width: 100%;
+}
+
+.favorite-card img,
+.tour-card img {
+  border-radius: 2rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
+}
+
+.favorite-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  min-height: 220px;
+  object-fit: cover;
+}
+
+.tour-card img {
+  width: 100%;
+  aspect-ratio: 5 / 4;
+  min-height: 320px;
+  object-fit: cover;
+}
+
+.favorite-copy {
+  width: 100%;
+}
+
+.rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.rating-star {
+  width: 1.15rem;
+  height: 1.15rem;
+  fill: #ffdd57;
+  stroke: #ffdd57;
+  stroke-linejoin: round;
+  stroke-width: 1.2;
+}
+
+.tour-card .glass {
+  background-color: rgba(0, 0, 0, 0.35);
+}
+
+/* Card overlay positioning */
+.card-overlay {
+  bottom: 24px;
+  left: 24px;
+}
+
+.badge-top-right {
+  right: 16px;
+  top: 16px;
+}
+
+.badge-top-left {
+  left: 16px;
+  top: 16px;
+}
+
+.tour-info-overlay {
+  bottom: 24px;
+}
+
+/* How it works icons */
+.step-icon-wrapper {
+  background-color: rgb(240, 240, 240);
+  margin-right: 1.5rem;
+}
+
+.step-icon {
+  opacity: 0.3;
+}
+
+/* Hero image */
+.hero-bg {
+  height: 100vh;
+  width: 100vw;
+  object-fit: cover;
+  opacity: 0.6;
+}
+
+/* Section titles */
+.section-title {
+  font-size: 4rem;
+}
+
+.section-title-md {
+  font-size: 3rem;
+}
+
+.section-label {
+  letter-spacing: 0.2em;
+}
+
+.how-it-works {
+  display: grid;
+  gap: 2rem;
+}
+
+.how-it-works-img {
+  width: 100%;
+  max-height: 820px;
+  object-fit: cover;
+  border-radius: 2rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
+}
+
+.testimonials {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.testimonial-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid #e9ecef;
+}
+
+.testimonial-entry:first-child {
+  border-top: none;
+}
+
+.testimonial-profile {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.testimonial-profile img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.testimonial-quote {
+  font-size: 1.1rem;
+  font-style: italic;
+  color: #6c757d;
+  margin: 0;
+}
+
+.cta-section {
+  position: relative;
+  min-height: 30dvh;
+  overflow: hidden;
+}
+
+.cta-section img {
+  width: 100%;
+  height: 50dvh;
+  object-fit: cover;
+  opacity: 0.75;
+  display: block;
+}
+
+.cta-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1.5rem;
+  padding: 2rem;
+  z-index: 1;
+}
+
+.cta-title {
+  color: #fff;
+  font-size: clamp(2rem, 6vw, 3.75rem);
+}
+
+.cta-overlay .btn {
+  padding-inline: 2.5rem;
+}
+
+.site-footer a {
+  text-decoration: none;
+}
+
+.hotel-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .search {
+    width: min(80vw, 28rem);
+  }
+
+  .favorites-grid,
+  .tour-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .testimonial-profile {
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hotel-results-grid {
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .search {
+    width: 36rem;
+  }
+
+  .favorite-copy {
+    max-width: 520px;
+  }
+
+  .how-it-works {
+    grid-template-columns: 0.95fr 1.05fr;
+    align-items: center;
+  }
+
+  .testimonial-entry {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .testimonial-profile {
+    flex: 0 0 320px;
+  }
+
+  .favorites-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+
+  .favorite-card {
+    flex-grow: 0;
+  }
+
+  .favorite-card img {
+    aspect-ratio: auto;
+    height: 300px;
+    width: 100%;
+    object-fit: cover;
+  }
+
+  .favorite-card-wide {
+    flex: 0 0 64%;
+  }
+
+  .favorite-card-medium {
+    flex: 0 0 calc(36% - 1.25rem);
+  }
+
+  .tour-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .tour-card {
+    flex: 1 1 30%;
+    max-width: 600px;
+  }
+
+  .tour-card img {
+    min-height: 420px;
+    aspect-ratio: auto;
+    height: 600px;
+    width: 600px;
+  }
+}
+
+/* Preloader */
+#preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url("images/preloader.jpg") center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+#preloader::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.preloader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.preloader-text {
+  font-size: 2.5rem;
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: #fff;
+  text-align: center;
+}
+
+.preloader-loader {
+  display: flex;
+  gap: 8px;
+}
+
+.preloader-loader span {
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  animation: preloaderBounce 1.4s ease-in-out infinite;
+}
+
+.preloader-loader span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.preloader-loader span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.preloader-loader span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes preloaderBounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

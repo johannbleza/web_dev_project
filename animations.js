@@ -13,6 +13,27 @@ const greetings = [
   "Mabuhay!",
 ];
 
+// Check if preloader should be skipped (after login or checkout)
+function shouldSkipPreloader() {
+  // Skip if returning from checkout (thankyou page or has checkout params)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (
+    window.location.pathname.includes("thankyou") ||
+    urlParams.has("session_id") ||
+    urlParams.has("hotel") ||
+    urlParams.has("user_id")
+  ) {
+    return true;
+  }
+
+  // Skip if preloader was already shown in this session
+  if (sessionStorage.getItem("preloaderShown") === "true") {
+    return true;
+  }
+
+  return false;
+}
+
 // Preloader Animation
 function initPreloader() {
   const preloader = document.getElementById("preloader");
@@ -23,6 +44,17 @@ function initPreloader() {
     initScrollAnimations();
     return;
   }
+
+  // Skip preloader after login or checkout
+  if (shouldSkipPreloader()) {
+    preloader.style.display = "none";
+    document.body.style.overflow = "auto";
+    initScrollAnimations();
+    return;
+  }
+
+  // Mark that preloader has been shown for this session
+  sessionStorage.setItem("preloaderShown", "true");
 
   document.body.style.overflow = "hidden";
 
@@ -61,7 +93,7 @@ function initPreloader() {
   }
 
   // Exit preloader with smooth animation
-  const tl = gsap.timeline({ delay: 4 });
+  const tl = gsap.timeline({ delay: 3.5 });
 
   tl.to(preloaderLoader, {
     opacity: 0,
