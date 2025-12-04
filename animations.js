@@ -34,24 +34,37 @@ function initPreloader() {
 
   document.body.style.overflow = "hidden";
 
-  let currentIndex = 0;
-  const intervalDuration = 150; // ~2.7 seconds for 15 greetings, leaving time for exit
+  // Initial reveal animation for the text
+  gsap.set(preloaderText, { opacity: 0, y: 30 });
+  gsap.to(preloaderText, {
+    opacity: 1,
+    y: 0,
+    delay: 0.5,
+    duration: 0.6,
+    ease: "power2.out",
+    onComplete: startGreetingCycle,
+  });
 
-  const greetingInterval = setInterval(() => {
-    currentIndex++;
-    if (currentIndex < greetings.length) {
-      preloaderText.textContent = greetings[currentIndex];
-    } else {
-      clearInterval(greetingInterval);
-    }
-  }, intervalDuration);
+  function startGreetingCycle() {
+    let currentIndex = 0;
+    const intervalDuration = 160; // Adjusted for ~2.7 seconds of switching
 
-  // Exit preloader after 3 seconds
+    const greetingInterval = setInterval(() => {
+      currentIndex++;
+      if (currentIndex < greetings.length) {
+        preloaderText.textContent = greetings[currentIndex];
+      } else {
+        clearInterval(greetingInterval);
+      }
+    }, intervalDuration);
+  }
+
+  // Exit preloader after 4 seconds
   gsap.to(preloader, {
     yPercent: -100,
     duration: 0.6,
     ease: "power3.inOut",
-    delay: 3,
+    delay: 4,
     onComplete: () => {
       preloader.style.display = "none";
       document.body.style.overflow = "auto";
@@ -94,11 +107,8 @@ function initScrollAnimations() {
   reveal(".favorite-card");
   reveal(".tour-card");
   reveal(".how-it-works-img");
-  reveal(".how-it-works .card");
   reveal(".how-it-works .p-4");
   reveal(".testimonial-entry");
-  reveal(".cta-overlay");
-  reveal(".site-footer");
 
   // Hotel cards observer for dynamic content
   observeHotelCards();
