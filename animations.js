@@ -1,9 +1,5 @@
-// GSAP Animations for Tara-Trip! Website
-// Simple scroll reveal animations with preloader
-
 gsap.registerPlugin(ScrollTrigger);
 
-// Greetings in different languages (ending with Mabuhay!)
 const greetings = [
   "Hello",
   "Bonjour",
@@ -19,13 +15,14 @@ const greetings = [
   "Salaam",
   "Nǐ hǎo",
   "Kamusta",
-  "Mabuhay!",
+  "Mabuhay!️ ",
 ];
 
 // Preloader Animation
 function initPreloader() {
   const preloader = document.getElementById("preloader");
   const preloaderText = document.querySelector(".preloader-text");
+  const preloaderLoader = document.querySelector(".preloader-loader");
 
   if (!preloader || !preloaderText) {
     initScrollAnimations();
@@ -34,20 +31,29 @@ function initPreloader() {
 
   document.body.style.overflow = "hidden";
 
-  // Initial reveal animation for the text
-  gsap.set(preloaderText, { opacity: 0, y: 30 });
+  // Initial reveal animation
+  gsap.set([preloaderText, preloaderLoader], { opacity: 0, y: 20 });
+
   gsap.to(preloaderText, {
     opacity: 1,
     y: 0,
-    delay: 0.5,
-    duration: 0.6,
-    ease: "power2.out",
+    delay: 0.3,
+    duration: 0.8,
+    ease: "power3.out",
     onComplete: startGreetingCycle,
+  });
+
+  gsap.to(preloaderLoader, {
+    opacity: 1,
+    y: 0,
+    delay: 0.5,
+    duration: 0.8,
+    ease: "power3.out",
   });
 
   function startGreetingCycle() {
     let currentIndex = 0;
-    const intervalDuration = 160; // Adjusted for ~2.7 seconds of switching
+    const intervalDuration = 160;
 
     const greetingInterval = setInterval(() => {
       currentIndex++;
@@ -59,18 +65,39 @@ function initPreloader() {
     }, intervalDuration);
   }
 
-  // Exit preloader after 4 seconds
-  gsap.to(preloader, {
-    yPercent: -100,
-    duration: 0.6,
-    ease: "power3.inOut",
-    delay: 4,
-    onComplete: () => {
-      preloader.style.display = "none";
-      document.body.style.overflow = "auto";
-      initScrollAnimations();
-    },
-  });
+  // Exit preloader with smooth animation
+  const tl = gsap.timeline({ delay: 4 });
+
+  tl.to(preloaderLoader, {
+    opacity: 0,
+    y: -20,
+    duration: 0.4,
+    ease: "power2.in",
+  })
+    .to(
+      preloaderText,
+      {
+        opacity: 0,
+        scale: 0.9,
+        duration: 0.4,
+        ease: "power2.in",
+      },
+      "-=0.3"
+    )
+    .to(
+      preloader,
+      {
+        clipPath: "inset(0 0 100% 0)",
+        duration: 0.8,
+        ease: "power4.inOut",
+        onComplete: () => {
+          preloader.style.display = "none";
+          document.body.style.overflow = "auto";
+          initScrollAnimations();
+        },
+      },
+      "-=0.1"
+    );
 }
 
 // Simple scroll reveal function
@@ -93,14 +120,6 @@ function reveal(selector) {
 
 // Initialize all scroll animations
 function initScrollAnimations() {
-  // Hero animations (play on load, not scroll)
-  gsap.from(".navbar", {
-    y: -30,
-    opacity: 0,
-    duration: 0.8,
-    ease: "power2.out",
-  });
-
   // Scroll reveal animations
   reveal(".section-title");
   reveal(".section-title-md");
