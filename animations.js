@@ -1,21 +1,16 @@
 gsap.registerPlugin(ScrollTrigger);
 
 const greetings = [
-  "Hello",
-  "Bonjour",
-  "Hola",
-  "Ciao",
-  "Hallo",
-  "Olá",
-  "Konnichiwa",
-  "Annyeong",
-  "Namaste",
-  "Sawadee",
-  "Shalom",
-  "Salaam",
-  "Nǐ hǎo",
   "Kamusta",
-  "Mabuhay!️ ",
+  "Kumusta",
+  "Maayong adlaw",
+  "Naimbag a aldaw",
+  "Magandang araw",
+  "Maupay nga adlaw",
+  "Mayap a aldo",
+  "Salamat",
+  "Tara na!",
+  "Mabuhay!",
 ];
 
 // Preloader Animation
@@ -53,7 +48,7 @@ function initPreloader() {
 
   function startGreetingCycle() {
     let currentIndex = 0;
-    const intervalDuration = 160;
+    const intervalDuration = 180;
 
     const greetingInterval = setInterval(() => {
       currentIndex++;
