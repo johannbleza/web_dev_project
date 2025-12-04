@@ -246,9 +246,9 @@ async function initAuth() {
     await clerk.load();
 
     loginBtn?.addEventListener("click", login);
-    logoutBtn?.addEventListener("click", () =>
-      clerk.signOut({ redirectUrl: window.location.href })
-    );
+    logoutBtn?.addEventListener("click", () => {
+      clerk.signOut({ redirectUrl: "http://localhost/web_dev_project" });
+    });
     userBtn?.addEventListener("click", () => clerk.openUserProfile());
     modalLoginBtn?.addEventListener("click", () => {
       login();

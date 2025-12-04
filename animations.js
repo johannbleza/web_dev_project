@@ -26,11 +26,6 @@ function shouldSkipPreloader() {
     return true;
   }
 
-  // Skip if preloader was already shown in this session
-  if (sessionStorage.getItem("preloaderShown") === "true") {
-    return true;
-  }
-
   return false;
 }
 
@@ -52,9 +47,6 @@ function initPreloader() {
     initScrollAnimations();
     return;
   }
-
-  // Mark that preloader has been shown for this session
-  sessionStorage.setItem("preloaderShown", "true");
 
   document.body.style.overflow = "hidden";
 
