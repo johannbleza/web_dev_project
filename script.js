@@ -213,7 +213,7 @@ async function handleBooking(e) {
     guests: Number(guestsInput.value),
     pricePerNight: booking.price,
     nights,
-    image: booking.image,
+    image: booking.image || (hotelImage && hotelImage.src) || "",
     userId: clerk?.user?.id || "",
   };
 
@@ -397,6 +397,15 @@ async function loadUserBookings() {
         </div>
       `;
       return;
+    }
+
+    // Ensure the newest bookings appear first (sort by booking_date desc)
+    if (Array.isArray(data.bookings)) {
+      data.bookings.sort((a, b) => {
+        const ta = a.booking_date ? Date.parse(a.booking_date) : 0;
+        const tb = b.booking_date ? Date.parse(b.booking_date) : 0;
+        return tb - ta;
+      });
     }
 
     bookingsContent.innerHTML = data.bookings.map(createBookingItem).join("");
