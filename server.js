@@ -3,16 +3,21 @@ const cors = require("cors");
 const Stripe = require("stripe");
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const BASE_URL = process.env.BASE_URL || "http://localhost/web_dev_project";
 const EXCHANGE_RATE_USD_TO_PHP = 56;
 const HOTEL_API_URL = "https://data.xotelo.com/api";
 const RESULT_LIMIT = 6;
 
-const stripe = Stripe(
-  "sk_test_51SZO97QwUPjmcb7Fr65nX4KdlccQ433u4zL3u0pAWRbEaiLEw6k3lee7WvttDRs5csnureZdjI2au0D0gwxSpTil00yY1OlNwO"
-);
+// Don't hardcode secrets in source. If STRIPE_SECRET is missing, /api/checkout will
+// return a clear error instead of failing unexpectedly.
+let stripe = null;
+if (process.env.STRIPE_SECRET) {
+  stripe = Stripe(process.env.STRIPE_SECRET);
+} else {
+  console.warn("STRIPE_SECRET not set — checkout endpoint will be disabled");
+}
 
-// Supported locations from tripadvisor
 const LOCATIONS = {
   boracay: { key: "g294260", label: "Boracay, Philippines" },
   palawan: { key: "g294255", label: "Palawan, Philippines" },
@@ -23,13 +28,12 @@ const LOCATIONS = {
   siargao: { key: "g674645", label: "Siargao Island, Philippines" },
 };
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
 function resolveLocation(query) {
-  const normalized = (query || "").trim().toLowerCase();
-  return LOCATIONS[normalized] || LOCATIONS.boracay;
+  const key = (query || "").trim().toLowerCase();
+  return LOCATIONS[key] || LOCATIONS.boracay;
 }
 
 function formatPrice(priceRanges) {
@@ -49,18 +53,29 @@ function formatPrice(priceRanges) {
   return { formatted: `${formatted} per night`, amount: maxPricePHP };
 }
 
-function formatHotel(hotel) {
-  const { name, accommodation_type, review_summary, price_ranges, image, url } =
-    hotel;
-  const priceInfo = formatPrice(price_ranges);
+function serializeHotel(hotel) {
+  const {
+    name,
+    accommodation_type: accommodationType,
+    review_summary: reviewSummary,
+    price_ranges: priceRanges,
+    image,
+    url,
+  } = hotel;
+
+  const priceInfo = formatPrice(priceRanges);
+  const rating =
+    typeof reviewSummary?.rating === "number"
+      ? reviewSummary.rating.toFixed(1)
+      : "N/A";
 
   return {
     name: name || "Unknown Hotel",
-    accommodation: accommodation_type || "Hotel",
-    rating: review_summary?.rating?.toFixed(1) || "N/A",
-    reviewCount: review_summary?.count || 0,
-    reviewLabel: review_summary?.count
-      ? `${review_summary.count} reviews`
+    accommodation: accommodationType || "Hotel",
+    rating,
+    reviewCount: reviewSummary?.count || 0,
+    reviewLabel: reviewSummary?.count
+      ? `${reviewSummary.count} reviews`
       : "No reviews",
     price: priceInfo.formatted,
     priceAmount: priceInfo.amount,
@@ -69,38 +84,44 @@ function formatHotel(hotel) {
   };
 }
 
+async function fetchJSON(url) {
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => "");
+    throw new Error(
+      `Upstream error: ${resp.status} ${resp.statusText} ${body}`
+    );
+  }
+  return resp.json();
+}
+
 app.get("/api/locations", (req, res) => {
   res.json(LOCATIONS);
 });
 
-// Search hotels by location
 app.get("/api/hotels", async (req, res) => {
   const query = req.query.location || "boracay";
   const location = resolveLocation(query);
 
   try {
     const url = `${HOTEL_API_URL}/list?location_key=${location.key}&limit=${RESULT_LIMIT}&offset=0&sort=best_value`;
-    const response = await fetch(url);
-    const data = await response.json();
+    const data = await fetchJSON(url);
 
-    if (data.error) {
-      throw new Error(data.error.message);
-    }
+    if (data.error) throw new Error(data.error.message || "Unknown API error");
 
-    const hotels = (data.result?.list || []).map(formatHotel);
+    const hotels = (data.result?.list || []).map(serializeHotel);
 
-    res.json({
-      location: location.label,
-      count: hotels.length,
-      hotels,
-    });
-  } catch (error) {
-    console.error("Hotel API error:", error);
-    res.status(500).json({ error: "Failed to fetch hotels" });
+    res.json({ location: location.label, count: hotels.length, hotels });
+  } catch (err) {
+    console.error("Error fetching hotels:", err.message || err);
+    res.status(502).json({ error: err.message || "Failed to fetch hotels" });
   }
 });
 
 app.post("/api/checkout", async (req, res) => {
+  if (!stripe)
+    return res.status(503).json({ error: "Payment gateway not configured" });
+
   try {
     const {
       hotel,
@@ -119,18 +140,20 @@ app.post("/api/checkout", async (req, res) => {
         .json({ error: "Missing required booking details" });
     }
 
-    const totalAmount = pricePerNight * nights * 100;
-    const totalInPHP = pricePerNight * nights;
+    const pricePerNightNum = Math.round(Number(pricePerNight));
+    const nightsNum = Math.max(1, parseInt(nights, 10) || 1);
+    const totalInPHP = pricePerNightNum * nightsNum;
+    const totalAmount = Math.round(totalInPHP * 100); // smallest currency unit
 
-    // Build success URL with booking details for the thank you page
     const successParams = new URLSearchParams({
       user_id: userId || "",
-      hotel: hotel,
-      start_date: startDate,
-      end_date: endDate,
-      guests: guests,
-      nights: nights,
-      total: totalInPHP,
+      hotel,
+      start_date: startDate || "",
+      end_date: endDate || "",
+      guests: guests || "",
+      nights: String(nightsNum),
+      total: String(totalInPHP),
+      image: image || "",
     });
 
     const session = await stripe.checkout.sessions.create({
@@ -141,7 +164,9 @@ app.post("/api/checkout", async (req, res) => {
             currency: "php",
             product_data: {
               name: hotel,
-              description: `${nights} night(s) • ${guests} guest(s) • ${startDate} to ${endDate}`,
+              description: `${nightsNum} night(s) • ${guests || 1} guest(s) • ${
+                startDate || ""
+              } to ${endDate || ""}`,
               images: image ? [image] : [],
             },
             unit_amount: totalAmount,
@@ -150,15 +175,14 @@ app.post("/api/checkout", async (req, res) => {
         },
       ],
       mode: "payment",
-      success_url: `http://localhost/web_dev_project/thankyou.php?${successParams.toString()}`,
-      cancel_url:
-        "http://localhost/web_dev_project/index.html?payment=cancelled",
+      success_url: `${BASE_URL}/thankyou.php?${successParams.toString()}`,
+      cancel_url: `${BASE_URL}/index.html?payment=cancelled`,
     });
 
     res.json({ url: session.url });
-  } catch (error) {
-    console.error("Stripe error:", error);
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error("Checkout error:", err.message || err);
+    res.status(500).json({ error: "Payment processing failed" });
   }
 });
 

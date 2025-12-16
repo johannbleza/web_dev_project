@@ -1,5 +1,4 @@
 gsap.registerPlugin(ScrollTrigger);
-
 const greetings = [
   "Kamusta",
   "Kumusta",
@@ -12,47 +11,34 @@ const greetings = [
   "Tara na!",
   "Mabuhay!",
 ];
-
-// Check if preloader should be skipped (after login or checkout)
 function shouldSkipPreloader() {
-  // Skip if returning from checkout (thankyou page or has checkout params)
+  if (localStorage.getItem("preloaderPlayed") === "true") return true;
   const urlParams = new URLSearchParams(window.location.search);
   if (
     window.location.pathname.includes("thankyou") ||
     urlParams.has("session_id") ||
     urlParams.has("hotel") ||
     urlParams.has("user_id")
-  ) {
+  )
     return true;
-  }
-
   return false;
 }
-
-// Preloader Animation
 function initPreloader() {
   const preloader = document.getElementById("preloader");
   const preloaderText = document.querySelector(".preloader-text");
   const preloaderLoader = document.querySelector(".preloader-loader");
-
   if (!preloader || !preloaderText) {
     initScrollAnimations();
     return;
   }
-
-  // Skip preloader after login or checkout
   if (shouldSkipPreloader()) {
     preloader.style.display = "none";
     document.body.style.overflow = "auto";
     initScrollAnimations();
     return;
   }
-
   document.body.style.overflow = "hidden";
-
-  // Initial reveal animation
   gsap.set([preloaderText, preloaderLoader], { opacity: 0, y: 20 });
-
   gsap.to(preloaderText, {
     opacity: 1,
     y: 0,
@@ -61,7 +47,6 @@ function initPreloader() {
     ease: "power3.out",
     onComplete: startGreetingCycle,
   });
-
   gsap.to(preloaderLoader, {
     opacity: 1,
     y: 0,
@@ -69,11 +54,9 @@ function initPreloader() {
     duration: 0.8,
     ease: "power3.out",
   });
-
   function startGreetingCycle() {
     let currentIndex = 0;
     const intervalDuration = 180;
-
     const greetingInterval = setInterval(() => {
       currentIndex++;
       if (currentIndex < greetings.length) {
@@ -83,10 +66,7 @@ function initPreloader() {
       }
     }, intervalDuration);
   }
-
-  // Exit preloader with smooth animation
   const tl = gsap.timeline({ delay: 3.5 });
-
   tl.to(preloaderLoader, {
     opacity: 0,
     y: -20,
@@ -95,12 +75,7 @@ function initPreloader() {
   })
     .to(
       preloaderText,
-      {
-        opacity: 0,
-        scale: 0.9,
-        duration: 0.4,
-        ease: "power2.in",
-      },
+      { opacity: 0, scale: 0.9, duration: 0.4, ease: "power2.in" },
       "-=0.3"
     )
     .to(
@@ -112,14 +87,13 @@ function initPreloader() {
         onComplete: () => {
           preloader.style.display = "none";
           document.body.style.overflow = "auto";
+          localStorage.setItem("preloaderPlayed", "true");
           initScrollAnimations();
         },
       },
       "-=0.1"
     );
 }
-
-// Simple scroll reveal function
 function reveal(selector) {
   const elements = document.querySelectorAll(selector);
   elements.forEach((el) => {
@@ -136,10 +110,7 @@ function reveal(selector) {
     });
   });
 }
-
-// Initialize all scroll animations
 function initScrollAnimations() {
-  // Scroll reveal animations
   reveal(".section-title");
   reveal(".section-title-md");
   reveal(".favorite-card");
@@ -147,16 +118,11 @@ function initScrollAnimations() {
   reveal(".how-it-works-img");
   reveal(".how-it-works .p-4");
   reveal(".testimonial-entry");
-
-  // Hotel cards observer for dynamic content
   observeHotelCards();
 }
-
-// Animate dynamically loaded hotel cards
 function observeHotelCards() {
   const grid = document.getElementById("hotelResultsGrid");
   if (!grid) return;
-
   const observer = new MutationObserver(() => {
     const cards = grid.querySelectorAll(".hotel-card");
     gsap.from(cards, {
@@ -167,9 +133,6 @@ function observeHotelCards() {
       ease: "power2.out",
     });
   });
-
   observer.observe(grid, { childList: true });
 }
-
-// Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", initPreloader);

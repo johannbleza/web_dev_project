@@ -1,19 +1,13 @@
-// Configuration
 const API_URL = "http://localhost:3000/api";
+const PHP_API_URL = "http://localhost/web_dev_project";
 
-// State
 let clerk = null;
 let bookingModal = null;
 let authModal = null;
+let editBookingModal = null;
 
-const booking = {
-  hotel: "",
-  price: 0,
-  image: "",
-  meta: "",
-};
+const booking = { hotel: "", price: 0, image: "", meta: "" };
 
-// DOM Elements
 // Search
 const searchForm = document.getElementById("hotelSearchForm");
 const searchInput = document.getElementById("hotelSearchInput");
@@ -38,11 +32,28 @@ const userBtn = document.getElementById("userButton");
 const userAvatar = document.getElementById("userAvatar");
 const modalLoginBtn = document.getElementById("modalLoginButton");
 
+// Bookings Sidebar
+const bookingsToggleBtn = document.getElementById("bookingsToggle");
+const bookingsSidebar = document.getElementById("bookingsSidebar");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
+const closeSidebarBtn = document.getElementById("closeSidebar");
+const bookingsContent = document.getElementById("bookingsContent");
+
 // Modals
 const bookingEl = document.getElementById("bookingModal");
 const authEl = document.getElementById("authRequiredModal");
+const editBookingEl = document.getElementById("editBookingModal");
 if (bookingEl) bookingModal = new bootstrap.Modal(bookingEl);
 if (authEl) authModal = new bootstrap.Modal(authEl);
+if (editBookingEl) editBookingModal = new bootstrap.Modal(editBookingEl);
+
+// Edit Booking Form Elements
+const editBookingForm = document.getElementById("editBookingForm");
+const editBookingIdInput = document.getElementById("editBookingId");
+const editBookingHotelInput = document.getElementById("editBookingHotel");
+const editStartDateInput = document.getElementById("editStartDate");
+const editEndDateInput = document.getElementById("editEndDate");
+const editGuestsInput = document.getElementById("editGuests");
 
 // Search
 searchForm?.addEventListener("submit", (e) => {
@@ -53,6 +64,14 @@ searchForm?.addEventListener("submit", (e) => {
 
 // Booking Form
 bookingForm?.addEventListener("submit", handleBooking);
+
+// Bookings Sidebar
+bookingsToggleBtn?.addEventListener("click", openBookingsSidebar);
+closeSidebarBtn?.addEventListener("click", closeBookingsSidebar);
+sidebarOverlay?.addEventListener("click", closeBookingsSidebar);
+
+// Edit Booking Form
+editBookingForm?.addEventListener("submit", handleEditBooking);
 
 // Auth
 initAuth();
@@ -79,7 +98,6 @@ async function loadHotels(location) {
     attachCardListeners(resultsGrid);
     statusText.textContent = `Showing ${data.count} stays for ${data.location}.`;
   } catch (error) {
-    console.error(error);
     statusText.textContent = "Error fetching hotels.";
   }
 }
@@ -230,7 +248,6 @@ async function checkout(data) {
       throw new Error(result.error || "Checkout failed");
     }
   } catch (error) {
-    console.error("Checkout error:", error);
     alert("Failed to redirect to checkout. Please try again.");
 
     if (submitBtn) {
@@ -257,9 +274,7 @@ async function initAuth() {
 
     updateAuthUI();
     clerk.addListener?.(updateAuthUI);
-  } catch (error) {
-    console.error("Auth init failed:", error);
-  }
+  } catch (error) {}
 }
 
 function waitForClerk() {
@@ -286,6 +301,7 @@ function updateAuthUI() {
   loginBtn?.classList.toggle("d-none", loggedIn);
   logoutBtn?.classList.toggle("d-none", !loggedIn);
   userBtn?.classList.toggle("d-none", !loggedIn);
+  bookingsToggleBtn?.classList.toggle("d-none", !loggedIn);
 
   if (loggedIn && clerk.user) {
     if (userAvatar) {
@@ -304,5 +320,290 @@ function login() {
   clerk?.openSignIn({
     afterSignInUrl: window.location.href,
     afterSignUpUrl: window.location.href,
+  });
+}
+
+// Bookings Sidebar Functions
+function openBookingsSidebar() {
+  bookingsSidebar?.classList.add("active");
+  sidebarOverlay?.classList.add("active");
+  document.body.style.overflow = "hidden";
+  loadUserBookings();
+}
+
+function closeBookingsSidebar() {
+  bookingsSidebar?.classList.remove("active");
+  sidebarOverlay?.classList.remove("active");
+  document.body.style.overflow = "auto";
+}
+
+async function loadUserBookings() {
+  if (!isLoggedIn()) {
+    bookingsContent.innerHTML = `
+      <div class="empty-bookings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <h4>Please log in</h4>
+        <p>Sign in to view your bookings</p>
+      </div>
+    `;
+    return;
+  }
+
+  bookingsContent.innerHTML = `
+    <div class="text-center text-muted py-5">
+      <div class="spinner-border spinner-border-sm" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-3">Loading your bookings...</p>
+    </div>
+  `;
+
+  try {
+    const userId = clerk?.user?.id;
+    const res = await fetch(`${PHP_API_URL}/bookings.php?userId=${userId}`);
+    const data = await res.json();
+
+    if (data.error) {
+      bookingsContent.innerHTML = `
+        <div class="empty-bookings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <h4>Error loading bookings</h4>
+          <p>${data.error}</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (!data.bookings || data.bookings.length === 0) {
+      bookingsContent.innerHTML = `
+        <div class="empty-bookings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <h4>No bookings yet</h4>
+          <p>Start exploring and book your first stay</p>
+        </div>
+      `;
+      return;
+    }
+
+    bookingsContent.innerHTML = data.bookings.map(createBookingItem).join("");
+    attachBookingActionListeners();
+  } catch (error) {
+    bookingsContent.innerHTML = `
+      <div class="empty-bookings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <h4>Error loading bookings</h4>
+        <p>Please try again later</p>
+      </div>
+    `;
+  }
+}
+
+function createBookingItem(booking) {
+  const statusClass = `booking-status-${booking.status || "pending"}`;
+  const statusText = booking.status || "pending";
+  const totalPrice = (booking.pricePerNight || 0) * (booking.nights || 1);
+
+  return `
+    <div class="booking-item" data-booking-id="${booking.booking_id}">
+      <img
+        src="${booking.image || "./images/palawan.avif"}"
+        alt="${booking.hotel}"
+        class="booking-item-image"
+      />
+      <h4 class="booking-item-title">${booking.hotel}</h4>
+      <div class="booking-item-details">
+        <div class="booking-item-detail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span>${formatDate(booking.startDate)} - ${formatDate(
+    booking.endDate
+  )}</span>
+        </div>
+        <div class="booking-item-detail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>${booking.guests} ${
+    booking.guests === 1 ? "guest" : "guests"
+  }</span>
+        </div>
+        <div class="booking-item-detail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+          </svg>
+          <span>${booking.nights} ${
+    booking.nights === 1 ? "night" : "nights"
+  }</span>
+        </div>
+      </div>
+      <div class="booking-item-price">PHP ${totalPrice.toLocaleString()}</div>
+      <span class="booking-item-status ${statusClass}">
+        ${statusText.charAt(0).toUpperCase() + statusText.slice(1)}
+      </span>
+      <div class="booking-item-actions">
+        <button class="btn btn-edit" data-action="edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 4px;">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          Edit
+        </button>
+        <button class="btn btn-delete" data-action="delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle; margin-right: 4px;">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          Delete
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function attachBookingActionListeners() {
+  const editButtons = bookingsContent.querySelectorAll('[data-action="edit"]');
+  const deleteButtons = bookingsContent.querySelectorAll(
+    '[data-action="delete"]'
+  );
+
+  editButtons.forEach((btn) => {
+    btn.addEventListener("click", handleEditButtonClick);
+  });
+
+  deleteButtons.forEach((btn) => {
+    btn.addEventListener("click", handleDeleteButtonClick);
+  });
+}
+
+function handleEditButtonClick(e) {
+  const bookingItem = e.target.closest(".booking-item");
+  const bookingId = bookingItem.dataset.bookingId;
+
+  // Get booking data from the DOM
+  const hotel = bookingItem.querySelector(".booking-item-title").textContent;
+  const dates = bookingItem
+    .querySelector(".booking-item-detail span")
+    .textContent.split(" - ");
+  const guestsText = bookingItem.querySelectorAll(
+    ".booking-item-detail span"
+  )[1].textContent;
+  const guests = parseInt(guestsText.split(" ")[0]);
+
+  // Parse dates back to YYYY-MM-DD format
+  const startDate = parseDateString(dates[0]);
+  const endDate = parseDateString(dates[1]);
+
+  // Populate edit form
+  editBookingIdInput.value = bookingId;
+  editBookingHotelInput.value = hotel;
+  editStartDateInput.value = startDate;
+  editEndDateInput.value = endDate;
+  editGuestsInput.value = guests;
+
+  editBookingModal?.show();
+}
+
+async function handleDeleteButtonClick(e) {
+  const bookingItem = e.target.closest(".booking-item");
+  const bookingId = bookingItem.dataset.bookingId;
+  const hotel = bookingItem.querySelector(".booking-item-title").textContent;
+
+  if (!confirm(`Are you sure you want to delete the booking for "${hotel}"?`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`${PHP_API_URL}/bookings.php`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookingId }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      // Reload bookings
+      loadUserBookings();
+    } else {
+      alert("Failed to delete booking: " + (data.error || "Unknown error"));
+    }
+  } catch (error) {
+    alert("Failed to delete booking. Please try again.");
+  }
+}
+
+async function handleEditBooking(e) {
+  e.preventDefault();
+
+  const bookingId = editBookingIdInput.value;
+  const startDate = editStartDateInput.value;
+  const endDate = editEndDateInput.value;
+  const guests = parseInt(editGuestsInput.value);
+
+  // Validate dates
+  if (new Date(endDate) <= new Date(startDate)) {
+    alert("Check-out date must be after check-in date");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${PHP_API_URL}/bookings.php`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookingId, startDate, endDate, guests }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      editBookingModal?.hide();
+      loadUserBookings();
+    } else {
+      alert("Failed to update booking: " + (data.error || "Unknown error"));
+    }
+  } catch (error) {
+    alert("Failed to update booking. Please try again.");
+  }
+}
+
+function parseDateString(dateStr) {
+  // Convert "Jan 15, 2024" to "2024-01-15"
+  const date = new Date(dateStr);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDate(dateString) {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }

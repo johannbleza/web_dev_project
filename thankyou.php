@@ -1,18 +1,18 @@
-<?php 
-// Database connection
-$serverName = "MYPC\SQLEXPRESS"; 
-$connectionOptions = [ 
-    "Database" => "dlsu", 
-    "Uid" => "",   
-    "PWD" => "" 
-]; 
+<?php
+$serverName = "MYPC\\SQLEXPRESS";
+$connectionOptions = [
+    "Database" => "dlsu",
+    "Uid" => "",
+    "PWD" => ""
+];
 
-$conn = sqlsrv_connect($serverName, $connectionOptions); 
-if ($conn === false) {
-    die(print_r(sqlsrv_errors(), true));
-} 
+$conn = sqlsrv_connect($serverName, $connectionOptions);
+$db_ok = $conn !== false;
+$error_message = '';
+if (!$db_ok) {
+    $error_message = 'Database connection failed.';
+}
 
-// Get the values from the URL parameters (passed from Stripe success redirect)
 $user_id = isset($_GET['user_id']) ? $_GET['user_id'] : '';
 $hotel = isset($_GET['hotel']) ? $_GET['hotel'] : '';
 $start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
@@ -20,29 +20,26 @@ $end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
 $guests = isset($_GET['guests']) ? intval($_GET['guests']) : 0;
 $nights = isset($_GET['nights']) ? intval($_GET['nights']) : 0;
 $total_amount = isset($_GET['total']) ? floatval($_GET['total']) : 0;
+$image_url = isset($_GET['image']) ? $_GET['image'] : '';
 $booking_date = date('Y-m-d H:i:s');
 
 $booking_saved = false;
-$error_message = '';
 
-// Only insert if we have valid booking data
-if (!empty($hotel) && !empty($start_date) && !empty($end_date)) {
-    // SQL insert with parameters
+if (!empty($hotel) && !empty($start_date) && !empty($end_date) && $db_ok) {
     $sql = "INSERT INTO BOOKING
-    (user_id, hotel_name, start_date, end_date, guests, nights, total_amount, booking_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    (user_id, hotel_name, start_date, end_date, guests, nights, total_amount, booking_date, status, image_url)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', ?)";
 
     $params = [
-        $user_id, $hotel, $start_date, $end_date, $guests, $nights, $total_amount, $booking_date
+        $user_id, $hotel, $start_date, $end_date, $guests, $nights, $total_amount, $booking_date, $image_url
     ];
 
-    // Query
     $query = sqlsrv_query($conn, $sql, $params);
 
     if ($query) {
         $booking_saved = true;
     } else {
-        $error_message = "Failed to save booking details.";
+        $error_message = 'Failed to save booking details.';
     }
 }
 
